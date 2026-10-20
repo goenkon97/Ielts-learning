@@ -1253,10 +1253,10 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 126, t: "10-20 19:21" };
+    const VER = { n: 127, t: "10-20 19:26" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
-    const onlSt = Vue.reactive({}); const jget = async (url) => { const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 7000); try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) return undefined; return await r.json(); } catch (e) { return undefined; } finally { clearTimeout(to); } };
+    const onlSt = Vue.reactive({}); const onlErr = {}; const jget = async (url) => { const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 8000); try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) { onlErr[url.split("/")[2]] = "HTTP " + r.status; return undefined; } return await r.json(); } catch (e) { onlErr[url.split("/")[2]] = (e && e.name === "AbortError") ? "超时" : "被浏览器拦截（多半是对方不允许跨站访问 CORS）"; return undefined; } finally { clearTimeout(to); } };
     const onlLoad = async (w) => {
       if (!w || !/^[a-z][a-z-]*$/.test(w) || onl[w]) return;
       if (onlC[w]) { onl[w] = onlC[w]; return; }
@@ -1267,13 +1267,13 @@ createApp({
       const res = { syn: [], ex: [] }; onlSt[w] = { syn: needSyn ? "加载中" : "", ex: needEx ? "加载中" : "" };
       const [sj, ej] = await Promise.all([
         needSyn ? jget("https://api.datamuse.com/words?rel_syn=" + encodeURIComponent(w) + "&max=12") : null,
-        needEx ? jget("https://tatoeba.org/en/api_v0/search?from=eng&to=cmn&trans_filter=limit&orphans=no&unapproved=no&sort=relevance&query=" + encodeURIComponent(w)) : null
+        needEx ? (async () => { const a = await jget("https://api.tatoeba.org/unstable/sentences?lang=eng&q=" + encodeURIComponent(w) + "&trans%3Alang=cmn&showtrans=cmn&limit=30"); if (a !== undefined) return a; return await jget("https://tatoeba.org/en/api_v0/search?from=eng&to=cmn&trans_filter=limit&orphans=no&unapproved=no&sort=relevance&query=" + encodeURIComponent(w)); })() : null
       ]);
-      onlSt[w] = { syn: !needSyn ? "" : sj === undefined ? "接口连不上（claude.ai 预览页禁止联网，请在你自己的网站上看）" : "", ex: !needEx ? "" : ej === undefined ? "接口连不上（claude.ai 预览页禁止联网，请在你自己的网站上看）" : "" };
+      onlSt[w] = { syn: !needSyn ? "" : sj === undefined ? "接口连不上：" + (onlErr["api.datamuse.com"] || "") : "", ex: !needEx ? "" : ej === undefined ? "接口连不上：" + (onlErr["api.tatoeba.org"] || "") + " / " + (onlErr["tatoeba.org"] || "") : "" };
       if (Array.isArray(sj)) res.syn = sj.map(x => String(x.word || "").toLowerCase()).filter(x => x && x !== w && x.split(" ").length <= 2 && /^[a-z -]+$/.test(x)).slice(0, 10);
-      if (ej && Array.isArray(ej.results)) {
+      const tl = ej ? (Array.isArray(ej.results) ? ej.results : Array.isArray(ej.data) ? ej.data : []) : []; if (tl.length) {
         const re = new RegExp("\\b" + w.replace(/[-]/g, "\\$&") + "[a-z]{0,3}\\b", "i");
-        ej.results.forEach(r => { const s = String(r.text || "").trim(); const n = s.split(/\s+/).length; if (n < 6 || n > 26 || !re.test(s)) return; let zh = ""; (r.translations || []).flat().forEach(t => { if (!zh && t && t.lang === "cmn" && t.text) zh = t.text; }); if (!zh) return; res.ex.push([s.replace(re, m => "**" + m + "**"), zh]); });
+        tl.forEach(r => { const s = String(r.text || "").trim(); const n = s.split(/\s+/).length; if (n < 6 || n > 26 || !re.test(s)) return; let zh = ""; (r.translations || []).flat(2).forEach(t => { if (!zh && t && (t.lang === "cmn" || t.language === "cmn") && t.text) zh = t.text; }); if (!zh) return; res.ex.push([s.replace(re, m => "**" + m + "**"), zh]); });
         res.ex = res.ex.slice(0, 5);
       }
       if (needEx && ej !== undefined && !res.ex.length) onlSt[w].ex = "没有合适的句子";
