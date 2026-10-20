@@ -1253,7 +1253,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 127, t: "10-20 19:26" };
+    const VER = { n: 128, t: "10-20 19:32" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlSt = Vue.reactive({}); const onlErr = {}; const jget = async (url) => { const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 8000); try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) { onlErr[url.split("/")[2]] = "HTTP " + r.status; return undefined; } return await r.json(); } catch (e) { onlErr[url.split("/")[2]] = (e && e.name === "AbortError") ? "超时" : "被浏览器拦截（多半是对方不允许跨站访问 CORS）"; return undefined; } finally { clearTimeout(to); } };
@@ -1267,7 +1267,7 @@ createApp({
       const res = { syn: [], ex: [] }; onlSt[w] = { syn: needSyn ? "加载中" : "", ex: needEx ? "加载中" : "" };
       const [sj, ej] = await Promise.all([
         needSyn ? jget("https://api.datamuse.com/words?rel_syn=" + encodeURIComponent(w) + "&max=12") : null,
-        needEx ? (async () => { const a = await jget("https://api.tatoeba.org/unstable/sentences?lang=eng&q=" + encodeURIComponent(w) + "&trans%3Alang=cmn&showtrans=cmn&limit=30"); if (a !== undefined) return a; return await jget("https://tatoeba.org/en/api_v0/search?from=eng&to=cmn&trans_filter=limit&orphans=no&unapproved=no&sort=relevance&query=" + encodeURIComponent(w)); })() : null
+        needEx ? (async () => { const a = await jget("https://api.tatoeba.org/v1/sentences?lang=eng&q=" + encodeURIComponent(w) + "&trans:lang=cmn&showtrans:lang=cmn"); if (a !== undefined) return a; return await jget("https://tatoeba.org/en/api_v0/search?from=eng&to=cmn&trans_filter=limit&orphans=no&unapproved=no&sort=relevance&query=" + encodeURIComponent(w)); })() : null
       ]);
       onlSt[w] = { syn: !needSyn ? "" : sj === undefined ? "接口连不上：" + (onlErr["api.datamuse.com"] || "") : "", ex: !needEx ? "" : ej === undefined ? "接口连不上：" + (onlErr["api.tatoeba.org"] || "") + " / " + (onlErr["tatoeba.org"] || "") : "" };
       if (Array.isArray(sj)) res.syn = sj.map(x => String(x.word || "").toLowerCase()).filter(x => x && x !== w && x.split(" ").length <= 2 && /^[a-z -]+$/.test(x)).slice(0, 10);
