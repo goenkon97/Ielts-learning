@@ -1253,16 +1253,18 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 128, t: "10-20 19:32" };
+    const VER = { n: 130, t: "10-20 19:35" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
+    const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
+    const zhLoad = async (words) => { for (const x of words) { if (onlZh[x] !== undefined) continue; if (zhC[x]) { onlZh[x] = zhC[x]; continue; } const j = await jget("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(x) + "&langpair=en|zh-CN"); const t = j && j.responseData && j.responseData.translatedText; if (t && /[\u4e00-\u9fa5]/.test(t) && t.length <= 14 && !/MYMEMORY|QUERY LENGTH/i.test(t)) { onlZh[x] = t; zhC[x] = t; try { const ks = Object.keys(zhC); if (ks.length > 1500) ks.slice(0, 300).forEach(k => delete zhC[k]); localStorage.setItem(ZHK, JSON.stringify(zhC)); } catch (e) {} } else onlZh[x] = ""; } };
     const onlSt = Vue.reactive({}); const onlErr = {}; const jget = async (url) => { const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 8000); try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) { onlErr[url.split("/")[2]] = "HTTP " + r.status; return undefined; } return await r.json(); } catch (e) { onlErr[url.split("/")[2]] = (e && e.name === "AbortError") ? "超时" : "被浏览器拦截（多半是对方不允许跨站访问 CORS）"; return undefined; } finally { clearTimeout(to); } };
     const onlLoad = async (w) => {
       if (!w || !/^[a-z][a-z-]*$/.test(w) || onl[w]) return;
       if (onlC[w]) { onl[w] = onlC[w]; return; }
       if (typeof navigator !== "undefined" && navigator.onLine === false) return;
       const d = dt.value; if (!d) return;
-      const needSyn = d.groups.reduce((n, g) => n + g.words.length, 0) < 4, needEx = d.ex.length < 5;
+      const needSyn = d.groups.reduce((n, g) => n + g.words.length, 0) < 4, needEx = false; /* Tatoeba 已停用：接口超时 */
       if (!needSyn && !needEx) return;
       const res = { syn: [], ex: [] }; onlSt[w] = { syn: needSyn ? "加载中" : "", ex: needEx ? "加载中" : "" };
       const [sj, ej] = await Promise.all([
@@ -1282,7 +1284,8 @@ createApp({
       onl[w] = res; onlC[w] = res; onlSave();
     };
     watch(detailW, (w) => { if (w) Vue.nextTick(() => onlLoad(w)); }, { immediate: true });
-    const onlSyn = computed(() => { const o = onl[detailW.value], d = dt.value; if (!o || !d) return []; const have = new Set(); d.groups.forEach(g => g.words.forEach(x => have.add(x.w))); return o.syn.filter(x => !have.has(x)).map(brief); });
+    watch(() => (onl[detailW.value] || { syn: [] }).syn, (s) => { const need = (s || []).filter(x => !brief(x).zh); if (need.length) zhLoad(need); }, { immediate: true, deep: true });
+    const onlSyn = computed(() => { const o = onl[detailW.value], d = dt.value; if (!o || !d) return []; const have = new Set(); d.groups.forEach(g => g.words.forEach(x => have.add(x.w))); return o.syn.filter(x => !have.has(x)).map(x => { const b = brief(x); if (!b.zh && onlZh[x]) return Object.assign({}, b, { zh: onlZh[x] }); return b; }); });
     const onlMsg = computed(() => { const s = onlSt[detailW.value], o = onl[detailW.value]; if (!s) return ""; const a = []; if (s.ex && !(o && o.ex.length)) a.push("在线例句（Tatoeba）：" + s.ex); if (s.syn && !(o && o.syn.length)) a.push("在线同义词（Datamuse）：" + s.syn); return a.join("；"); });
     const exAll = computed(() => { const d = dt.value; if (!d) return []; const out = d.ex.slice(), o = onl[detailW.value]; if (o && out.length < 5) { const seen = new Set(out.map(e => e.s.replace(/\*\*/g, ""))); o.ex.forEach(x => { if (out.length < 5 && !seen.has(x[0].replace(/\*\*/g, ""))) { seen.add(x[0].replace(/\*\*/g, "")); out.push({ s: x[0], t: x[1], src: "Tatoeba", online: true }); } }); } return out; });
     const dstack = ref([]); let origin = null;
