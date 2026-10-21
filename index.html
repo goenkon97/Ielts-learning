@@ -218,7 +218,7 @@ article mark{background:var(--chip);color:var(--blue);padding:0 4px;border-radiu
 .trt{border:0;background:var(--line);color:var(--text);font:600 13px inherit;font-family:inherit;padding:7px 12px;border-radius:9px;cursor:pointer}.trt.on{background:var(--blue);color:#fff}
 .trc .pr{padding:10px 0;border-top:1px solid var(--line)}.trc .pr:first-of-type{border-top:0;padding-top:0}.trc .en{color:var(--sub);font-size:14px;line-height:1.5}.trc .zh{margin-top:3px;font-size:16px}
 .sig{position:relative;gap:10px;align-items:flex-end}.sig .nm{font-size:clamp(30px,8.4vw,44px);white-space:nowrap}.hs{flex:0 1 150px;margin-left:auto;min-width:0;display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;margin-bottom:5px;background:rgba(120,120,128,.12);color:var(--sub);transition:background .2s,box-shadow .2s}.hs:focus-within{background:var(--card,#fff);box-shadow:0 0 0 2px var(--blue),0 6px 20px rgba(0,0,0,.08)}.hs input::placeholder{color:var(--sub);opacity:.75;letter-spacing:.02em}.hs input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 15px inherit;font-family:inherit;color:var(--text)}.hs .hx{border:0;background:rgba(120,120,128,.3);color:#fff;width:18px;height:18px;border-radius:50%;font-size:13px;line-height:17px;padding:0;cursor:pointer}
-.hsl{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:30;background:var(--card,#fff);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:6px;max-height:60vh;overflow:auto}.hsl button{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 10px;border-radius:9px;font:inherit;color:var(--text);cursor:pointer;min-width:0}.hsl button:hover{background:rgba(0,113,227,.09)}.hsl b{font-weight:600}.hsl i{font-size:12px;color:var(--sub)}.hsl span{font-size:14px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hsl{border:1px solid #ece3cc;position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:30;background:var(--card,#fff);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:6px;max-height:60vh;overflow:auto}.hsl button{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:none;padding:10px 10px;border-radius:9px;font:inherit;color:var(--text);cursor:pointer;min-width:0}.hsl button:hover{background:rgba(0,113,227,.09)}.hsl b{font-weight:600}.hsl i{font-size:12px;color:var(--sub)}.hsl span{font-size:14px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .hgrid .tile{display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start}
 main{--px:20px}.stick{margin-left:calc(-1*var(--px))!important;margin-right:calc(-1*var(--px))!important;padding-left:var(--px)!important;padding-right:var(--px)!important}
 @media (max-width:380px){main{--px:14px;padding-left:14px;padding-right:14px}.hgrid{gap:10px}.hgrid .tile{padding:14px;min-height:120px}.hgrid .tile h2{font-size:17px;white-space:nowrap}.hgrid .tile p{font-size:12px}.hgrid .ico{width:44px;height:44px;border-radius:12px}.hgrid .ico svg{width:24px;height:24px}header b{font-size:15px}.sig .nm{font-size:28px}.hs{flex-basis:120px}.trt{padding:6px 9px}}
@@ -329,6 +329,41 @@ header #back{justify-self:start}header b{text-align:center}header .hr{justify-se
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rl>span{color:#e8c27a}}
 header b .ver{font-size:11px;font-weight:500;color:#b8892e;margin-left:8px;letter-spacing:.2px;vertical-align:2px}.onl{display:inline-block;font-size:10.5px;font-weight:600;color:#b8892e;background:#fbf8ef;border:1px solid #ecdfbc;border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .onl{background:#2a2518;border-color:#4a3f22;color:#e8c27a}:root:not([data-theme="light"]) header b .ver{color:#e8c27a}}
 .sfrom{font-size:12.5px;color:#8a7a52;margin:0 0 8px;line-height:1.5}.sfrom b{color:#b8892e}
+/*home-v2*/
+body:has(.hhead){background:radial-gradient(120% 60% at 50% -10%,#f6ecd2 0%,rgba(246,236,210,0) 60%),#f4f0e8}
+.hhead .nm{font-family:"New York","Iowan Old Style","Songti SC","Noto Serif SC",Georgia,serif;font-weight:700;letter-spacing:-.01em}
+.hhead .mot{font-family:"New York","Iowan Old Style",Georgia,serif;font-style:italic;color:#8a7a5c}
+.hgrid{counter-reset:t}
+.hgrid .tile{counter-increment:t;position:relative;overflow:hidden;background:linear-gradient(160deg,#fffefb,#fbf6ea);border:1px solid #ece3cc;border-radius:22px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 10px 26px -14px rgba(120,84,12,.28);transition:transform .2s,box-shadow .2s}
+.hgrid .tile::after{content:"0" counter(t);position:absolute;right:14px;top:10px;font:700 34px/1 "New York",Georgia,serif;color:#b8892e;opacity:.16;letter-spacing:-.02em}
+.hgrid .tile:active{transform:scale(.98)}
+@media (hover:hover){.hgrid .tile:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 16px 30px -14px rgba(120,84,12,.38)}}
+.hgrid .tile .ico{display:flex;align-items:center;justify-content:center;width:46px!important;height:46px!important;border-radius:50%!important;background:linear-gradient(160deg,#f9f0d6,#efdfb2)!important;box-shadow:inset 0 0 0 1px rgba(184,137,46,.28)!important;margin-bottom:12px}
+.hgrid .tile .ico svg{width:24px;height:24px}
+body:has(.hhead){background-attachment:fixed}
+.hgrid .tile .ico svg{width:22px;height:22px}
+.hgrid .tile h2{color:#2a2218}
+.hgrid .tile p{color:#8a7a5c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body:has(.hhead){background:radial-gradient(120% 60% at 50% -10%,#2a2111 0%,rgba(42,33,17,0) 60%),#0b0a08}
+:root:not([data-theme="light"]) .hgrid .tile{background:linear-gradient(160deg,#1e1b15,#16140f);border-color:#2f291b;box-shadow:0 10px 26px -14px rgba(0,0,0,.7)}
+:root:not([data-theme="light"]) .hgrid .tile .ico{background:linear-gradient(160deg,#3a2f17,#2b2312)!important;box-shadow:inset 0 0 0 1px rgba(232,194,122,.25)!important}
+:root:not([data-theme="light"]) .hgrid .tile h2{color:#f3ead7}:root:not([data-theme="light"]) .hgrid .tile p{color:#a89a78}:root:not([data-theme="light"]) .hhead .mot{color:#a89a78}}
+/*end home-v2*/
+/*page-warm*/
+:root{--bg:#f4f0e8;--card:#fffcf5;--line:#e8dfca;--sub:#7a6e5c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--line:#2f291b;--sub:#a89a78}}
+body{background:radial-gradient(120% 40% at 50% -8%,#f6ecd2 0%,rgba(246,236,210,0) 60%),#f4f0e8;background-attachment:fixed}
+main .stick>input[type=search]{background:#efe8d8;border:1px solid #e6dcc3;color:#2a2218}
+main .stick>input[type=search]::placeholder{color:#a8977a}
+main .card{background:linear-gradient(160deg,#fffefb,#fbf6ea);border:1px solid #ece3cc;border-radius:22px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 10px 26px -16px rgba(120,84,12,.26)}
+main .card .word,main .card h3{color:#2a2218}
+main .count,main .cnt{color:#8a6414}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:radial-gradient(120% 40% at 50% -8%,#2a2111 0%,rgba(42,33,17,0) 60%),#0b0a08;background-attachment:fixed}
+:root:not([data-theme="light"]) main .stick>input[type=search]{background:#1d1a14;border-color:#2f291b;color:#f3ead7}
+:root:not([data-theme="light"]) main .card{background:linear-gradient(160deg,#1e1b15,#16140f);border-color:#2f291b;box-shadow:0 10px 26px -16px rgba(0,0,0,.7)}
+:root:not([data-theme="light"]) main .card .word{color:#f3ead7}:root:not([data-theme="light"]) main .pager button,:root:not([data-theme="light"]) main .pager select{background:#2a2418!important;color:#d9c28f!important}}
+main .pager button,main .pager select{background:#ede4cf!important;color:#7a5a1a!important}
+/*end page-warm*/
 </style>
 </head>
 <body>
@@ -1259,7 +1294,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 150, t: "10-21 14:30" };
+    const VER = { n: 155, t: "10-21 14:48" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
