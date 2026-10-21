@@ -232,6 +232,7 @@ main{--px:20px}.stick{margin-left:calc(-1*var(--px))!important;margin-right:calc
 .tr{margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--sub);font-size:15px;line-height:1.7}
 .st.sel{display:block;margin:8px 0;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--blue) 7%,transparent)}.zi{display:block;margin-top:4px;font-size:15px;line-height:1.6;color:var(--sub)}
 body{touch-action:manipulation}
+[v-cloak]{display:none!important}
 article p{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .row{flex-wrap:nowrap;gap:8px}.row>span{min-width:0}.pager{flex:none}.pager{display:flex;align-items:center;gap:6px}.pager button{width:28px;height:28px;border:0;border-radius:10px;background:var(--card);color:var(--blue);font-size:18px;line-height:1;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}.pager button:disabled{opacity:.35;cursor:default}.pager select{height:28px;padding:0 4px 0 10px;border:0;border-radius:10px;background:var(--card);color:var(--text);font:600 13px inherit;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer}
 @media (hover:none),(pointer:coarse){input,select,textarea{font-size:16px!important}}
@@ -388,7 +389,7 @@ article mark{transition:filter .12s}@media (hover:hover){article mark:hover{filt
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app" v-cloak>
 <header>
   <button id="back" :style="{visibility: view==='home' ? 'hidden' : 'visible'}" @click="goBack">‹ 返回</button>
   <b>{{ title }}<small class="ver" v-if="view==='home'">v{{ VER.n }} · {{ VER.t }}</small></b>
@@ -1344,7 +1345,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 178, t: "10-22 07:15" };
+    const VER = { n: 179, t: "10-22 07:18" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
