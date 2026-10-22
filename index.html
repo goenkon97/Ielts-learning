@@ -1067,7 +1067,7 @@ createApp({
       const clipUrl = (t) => AUDB + fnv(String(t).replace(/\*\*|\+\+/g, "").replace(/’/g, "'").toLowerCase().split(/\s+/).filter(Boolean).join(" ").replace(/^([^\s]+?)'+$/, "$1")) + ".mp3";
       const _cn = speechSynthesis.cancel.bind(speechSynthesis);
       speechSynthesis.cancel = () => { aTok++; try { AUD.onended = AUD.onerror = null; AUD.pause(); } catch (e) {} _cn(); };
-      window.__clipUrl = clipUrl; const NOCLIP = new Set(); const BLOBS = new Map(); let MAN = null;
+      window.__clipUrl = clipUrl; const NOCLIP = new Set(); const BLOBS = new Map(); const USEBLOB = false; /* 实测手机上「先下载再播放」比直接播放慢，所以默认直接播放 */ let MAN = null;
       try { fetch(AUDB + "manifest.txt?v=" + Math.floor(Date.now() / 600000)).then(r => r.ok ? r.text() : Promise.reject()).then(t => { const s = new Set(t.split(/\s+/).filter(Boolean)); if (s.size > 100) { MAN = s; window.__clipMan = s; } }).catch(() => {}); } catch (e) {}
       /* iOS：系统朗读必须先在一次点击里"解锁"，否则音频文件缺失、过一会儿再退回系统发音时会没有声音 */
       let unlocked = false; const unlock = () => { if (unlocked) return; unlocked = true; try { AUD.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; const pr0 = AUD.play(); if (pr0 && pr0.catch) pr0.catch(() => {}); } catch (e) {} try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; _sp(u); } catch (e) {} };
@@ -1092,7 +1092,8 @@ createApp({
             const bl = BLOBS.get(url);
             const playBlob = (b) => { if (k !== aTok) return; if (!tf) tf = performance.now(); dt(); const bu = URL.createObjectURL(b); AUD.onended = () => { try { URL.revokeObjectURL(bu); } catch (e) {} fin(); }; AUD.onerror = back; AUD.src = bu; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); };
             try {
-              if (bl) { cached = true; playBlob(bl); }
+              if (!USEBLOB) direct();
+              else if (bl) { cached = true; playBlob(bl); }
               else fetch(url).then(r => { if (r.status === 404 || r.status === 403) { NOCLIP.add(url); throw new Error("none"); } if (!r.ok) throw new Error("bad"); return r.blob(); }).then(bb => { BLOBS.set(url, bb); if (BLOBS.size > 300) BLOBS.delete(BLOBS.keys().next().value); playBlob(bb); }).catch(err => { if (err && err.message === "none") back(); else direct(); });
             } catch (e) { direct(); }
             return;
@@ -1403,7 +1404,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 191, t: "10-22 21:01" };
+    const VER = { n: 192, t: "10-22 21:09" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
