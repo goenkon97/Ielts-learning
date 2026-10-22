@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+<link rel="preconnect" href="https://audio.goenkon.com">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Goen Kon · IELTS</title>
@@ -1063,7 +1064,7 @@ createApp({
       /* 预先生成的英音 AI 语音（Sonia）：有对应 mp3 就播，没有就退回系统发音 */
       const AUDB = "https://audio.goenkon.com/"; let CLIPS = true; const AUD = new Audio(); AUD.preload = "auto"; let aTok = 0;
       const fnv = (s) => { let h = 0xcbf29ce484222325n; const b = new TextEncoder().encode(s); for (const x of b) { h ^= BigInt(x); h = (h * 0x100000001b3n) & 0xFFFFFFFFFFFFFFFFn; } return h.toString(16).padStart(16, "0"); };
-      const clipUrl = (t) => AUDB + fnv(String(t).replace(/\*\*|\+\+/g, "").replace(/’/g, "'").toLowerCase().split(/\s+/).filter(Boolean).join(" ")) + ".mp3";
+      const clipUrl = (t) => AUDB + fnv(String(t).replace(/\*\*|\+\+/g, "").replace(/’/g, "'").toLowerCase().split(/\s+/).filter(Boolean).join(" ").replace(/^([^\s]+?)'+$/, "$1")) + ".mp3";
       const _cn = speechSynthesis.cancel.bind(speechSynthesis);
       speechSynthesis.cancel = () => { aTok++; try { AUD.onended = AUD.onerror = null; AUD.pause(); } catch (e) {} _cn(); };
       window.__clipUrl = clipUrl;
@@ -1387,7 +1388,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 186, t: "10-22 16:50" };
+    const VER = { n: 187, t: "10-22 19:44" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
