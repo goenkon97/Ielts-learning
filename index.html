@@ -22,6 +22,7 @@ header b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowra
 .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 main{max-width:720px;margin:0 auto;padding:8px 20px 48px}
 .dbar+.dall{margin-top:52px}
+.pk{margin-top:14px;padding:16px 18px}.pkh{display:flex;justify-content:space-between;align-items:baseline}.pkh small{color:var(--sub)}.pkt{margin:6px 0 10px;font-size:13px;color:var(--sub);line-height:1.5}.pkb{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.pkb i{display:block;height:100%;background:var(--blue);transition:width .3s}.pka{display:flex;gap:10px;margin-top:12px}.pka button{border:0;border-radius:10px;padding:8px 16px;background:var(--blue);color:#fff;font-size:14px;cursor:pointer}.pka button.ghost{background:var(--line);color:var(--text)}.pkm{display:block;margin-top:8px;color:var(--sub);font-size:12px}
 .hgrid .tile{min-height:132px}.hgrid .tile h2{font-size:20px}.hgrid .tile p{font-size:13px}
 .alist{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border:0;color:inherit;font:inherit;cursor:pointer;margin-bottom:10px}
 .alist b{font-size:17px}.alist small{color:var(--sub)}
@@ -409,6 +410,13 @@ article mark{transition:filter .12s}@media (hover:hover){article mark:hover{filt
     <button class="card tile" @click="go('phr')"><div class="ico i4"><svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h32v20H22l-8 7v-7H8z"/><path d="M16 20h16M16 26h10"/></g></svg></div><h2>短语</h2><p>{{ PH.length }} 个短语</p></button>
     <button class="card tile" @click="go('gram')"><div class="ico i5"><svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h22l8 8v24H10z"/><path d="M32 8v8h8M17 24h14M17 31h14"/></g></svg></div><h2>语法与时态</h2><p>{{ GR.length }} 个知识点</p></button>
     <button class="card tile" @click="go('tips')"><div class="ico i6"><svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6a12 12 0 0 0-7 21.8V33h14v-5.2A12 12 0 0 0 24 6z"/><path d="M18 40h12M20 44h8"/></g></svg></div><h2>考试技巧</h2><p>听说读写 · 备考指南</p></button>
+    </div>
+    <div class="card pk" v-if="pack.ok">
+      <div class="pkh"><b>离线语音包</b><small>{{ pack.done }} / {{ pack.total }}</small></div>
+      <p class="pkt">下载到手机后，点发音直接从手机里取，不用联网，出声更快。约 {{ Math.round(pack.total * 12 / 1024) }} MB，建议连 Wi-Fi，下载时请保持页面打开。</p>
+      <div class="pkb"><i :style="{width: (pack.total ? pack.done / pack.total * 100 : 0) + '%'}"></i></div>
+      <div class="pka"><button v-if="!pack.run && pack.done < pack.total" @click="pkStart">{{ pack.done ? '继续下载' : '下载语音包' }}</button><button v-if="pack.run" @click="pkPause">暂停</button><button v-if="pack.done && !pack.run" class="ghost" @click="pkClear">删除</button></div>
+      <small class="pkm" v-if="pack.msg || pack.usage">{{ pack.msg }} <span v-if="pack.usage">手机已用 {{ pack.usage }}</span></small>
     </div>
   </template>
 
@@ -1062,7 +1070,7 @@ createApp({
       speechSynthesis.getVoices();
       const _sp = speechSynthesis.speak.bind(speechSynthesis); let tok = 0;
       /* 预先生成的英音 AI 语音（Sonia）：有对应 mp3 就播，没有就退回系统发音 */
-      const AUDB = "https://audio.goenkon.com/"; let CLIPS = true; const AUD = new Audio(); AUD.preload = "auto"; let aTok = 0;
+      const AUDB = window.__AUDB || "https://audio.goenkon.com/"; let CLIPS = true; const AUD = new Audio(); AUD.preload = "auto"; let aTok = 0;
       const fnv = (s) => { let h = 0xcbf29ce484222325n; const b = new TextEncoder().encode(s); for (const x of b) { h ^= BigInt(x); h = (h * 0x100000001b3n) & 0xFFFFFFFFFFFFFFFFn; } return h.toString(16).padStart(16, "0"); };
       const clipUrl = (t) => AUDB + fnv(String(t).replace(/\*\*|\+\+/g, "").replace(/’/g, "'").toLowerCase().split(/\s+/).filter(Boolean).join(" ").replace(/^([^\s]+?)'+$/, "$1")) + ".mp3";
       const _cn = speechSynthesis.cancel.bind(speechSynthesis);
@@ -1404,7 +1412,17 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 192, t: "10-22 21:09" };
+    /* 离线语音包：把音频下载到手机浏览器里，点发音时由 sw.js 直接从手机里取 */
+    const PKA = window.__AUDB || "https://audio.goenkon.com/", PKC = "ielts-audio-v1";
+    const pack = Vue.reactive({ ok: false, total: 0, done: 0, run: false, fail: 0, msg: "", usage: "" });
+    let pkIds = [], pkStop = false;
+    const pkUsage = async () => { try { const e = await navigator.storage.estimate(); pack.usage = Math.round((e.usage || 0) / 1048576) + " MB" + (e.quota ? "（可用约 " + Math.round(e.quota / 1048576) + " MB）" : ""); } catch (x) {} };
+    const pkInit = async () => { try { if (!("serviceWorker" in navigator) || !window.caches) return; await navigator.serviceWorker.register("sw.js?h=" + encodeURIComponent(new URL(PKA).host)); const r0 = await fetch(PKA + "manifest.txt?v=" + Math.floor(Date.now() / 600000)); if (!r0.ok) return; pkIds = (await r0.text()).split(/\s+/).filter(Boolean); if (pkIds.length < 100) return; pack.total = pkIds.length; const c = await caches.open(PKC); const have = new Set((await c.keys()).map(r => r.url)); pack.done = pkIds.filter(i => have.has(PKA + i + ".mp3")).length; pack.ok = true; pkUsage(); } catch (e) {} };
+    const pkStart = async () => { if (pack.run) return; pack.run = true; pkStop = false; pack.fail = 0; pack.msg = ""; try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} const c = await caches.open(PKC); const have = new Set((await c.keys()).map(r => r.url)); const todo = pkIds.filter(i => !have.has(PKA + i + ".mp3")); pack.done = pkIds.length - todo.length; let p = 0; const worker = async () => { while (!pkStop) { const i = p++; if (i >= todo.length) return; const url = PKA + todo[i] + ".mp3"; try { const r = await fetch(url); if (r.ok) { await c.put(url, r); pack.done++; } else pack.fail++; } catch (e) { pack.fail++; if (/quota/i.test(String((e && e.name) || "") + String((e && e.message) || ""))) { pack.msg = "手机存储空间不足，已停止。"; pkStop = true; } } if (pack.done % 200 === 0) pkUsage(); } }; await Promise.all(Array.from({ length: 6 }, worker)); pack.run = false; pkUsage(); if (!pack.msg) pack.msg = pkStop ? "已暂停" : (pack.fail ? "有 " + pack.fail + " 个下载失败，再点一次可重试。" : "已全部下载。"); };
+    const pkPause = () => { pkStop = true; };
+    const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await caches.delete(PKC); } catch (e) {} pack.done = 0; pack.msg = "已删除"; pkUsage(); };
+    setTimeout(pkInit, 1500);
+    const VER = { n: 194, t: "10-22 21:31" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -1505,7 +1523,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
