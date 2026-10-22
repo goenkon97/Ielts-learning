@@ -1072,23 +1072,27 @@ createApp({
       /* iOS：系统朗读必须先在一次点击里"解锁"，否则音频文件缺失、过一会儿再退回系统发音时会没有声音 */
       let unlocked = false; const unlock = () => { if (unlocked) return; unlocked = true; try { AUD.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; const pr0 = AUD.play(); if (pr0 && pr0.catch) pr0.catch(() => {}); } catch (e) {} try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; _sp(u); } catch (e) {} };
       ["pointerdown", "touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
+      /* 临时的计时提示：点击后到出声用了多久（localStorage.ielts_timing = "0" 可关闭） */
+      const tmToast = (txt) => { try { if (localStorage.getItem("ielts_timing") === "0") return; } catch (e) {} let el = document.getElementById("tmtoast"); if (!el) { el = document.createElement("div"); el.id = "tmtoast"; el.style.cssText = "position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:8px 14px;border-radius:12px;font:13px/1.4 -apple-system,system-ui,sans-serif;z-index:99999;pointer-events:none;transition:opacity .25s;opacity:0;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis"; document.body.appendChild(el); } el.textContent = txt; el.style.opacity = "1"; clearTimeout(el._t); el._t = setTimeout(() => { el.style.opacity = "0"; }, 1000); };
       speechSynthesis.speak = (u) => {
-        const my = ++tok; let done = false;
-        const go = () => { if (done || my !== tok) return; done = true; if (!u.voice) { const v = pick(u.lang); if (v) u.voice = v; } _sp(u); };
+        const my = ++tok; let done = false; const T0 = performance.now(); let why = "";
+        const ms = (x) => Math.round(x) + "ms";
+        const go = () => { if (done || my !== tok) return; done = true; if (!u.voice) { const v = pick(u.lang); if (v) u.voice = v; } try { u.addEventListener("start", () => tmToast("系统发音 " + ms(performance.now() - T0) + (why ? "（" + why + "）" : ""))); } catch (e) {} _sp(u); };
         const sys = () => { if (speechSynthesis.getVoices().length) setTimeout(go, 80); else { speechSynthesis.addEventListener("voiceschanged", () => setTimeout(go, 80), { once: true }); setTimeout(go, 800); } };
         if (CLIPS && /^en-GB/i.test(u.lang || "")) {
           let url = ""; try { url = clipUrl(u.text); } catch (e) { url = ""; }
-          if (url && MAN && !MAN.has(url.slice(AUDB.length, -4))) url = ""; /* 清单里没有 = 没做这条音频，立刻用系统发音，不等网络 */
+          if (url && MAN && !MAN.has(url.slice(AUDB.length, -4))) { url = ""; why = "清单里没有 AI 音频"; } /* 清单里没有 = 没做这条音频，立刻用系统发音，不等网络 */
           if (url && !NOCLIP.has(url)) {
             const k = ++aTok; let fb = false;
-            const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; NOCLIP.add(url); sys(); };
+            const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; NOCLIP.add(url); why = "AI 音频没有或失败，" + ms(performance.now() - T0) + "后退回"; sys(); };
             const fin = () => { if (k !== aTok) return; AUD.onended = AUD.onerror = null; if (u.onend) u.onend(new Event("end")); };
-            const direct = () => { if (k !== aTok) return; AUD.onended = fin; AUD.onerror = back; try { AUD.src = url; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); } catch (e) { back(); } };
+            let tf = 0, cached = false; const dt = () => { AUD.onplaying = () => { AUD.onplaying = null; const tp = performance.now(); tmToast("AI 语音 " + ms(tp - T0) + (cached ? "（缓存）" : tf ? "（下载 " + ms(tf - T0) + " + 起播 " + ms(tp - tf) + "）" : "（直接播放）")); }; };
+            const direct = () => { if (k !== aTok) return; dt(); AUD.onended = fin; AUD.onerror = back; try { AUD.src = url; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); } catch (e) { back(); } };
             /* 先把整个小文件下载到内存再播放：iPhone 直接播网络音频要来回探测好几次，很慢 */
             const bl = BLOBS.get(url);
-            const playBlob = (b) => { if (k !== aTok) return; const bu = URL.createObjectURL(b); AUD.onended = () => { try { URL.revokeObjectURL(bu); } catch (e) {} fin(); }; AUD.onerror = back; AUD.src = bu; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); };
+            const playBlob = (b) => { if (k !== aTok) return; if (!tf) tf = performance.now(); dt(); const bu = URL.createObjectURL(b); AUD.onended = () => { try { URL.revokeObjectURL(bu); } catch (e) {} fin(); }; AUD.onerror = back; AUD.src = bu; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); };
             try {
-              if (bl) playBlob(bl);
+              if (bl) { cached = true; playBlob(bl); }
               else fetch(url).then(r => { if (r.status === 404 || r.status === 403) { NOCLIP.add(url); throw new Error("none"); } if (!r.ok) throw new Error("bad"); return r.blob(); }).then(bb => { BLOBS.set(url, bb); if (BLOBS.size > 300) BLOBS.delete(BLOBS.keys().next().value); playBlob(bb); }).catch(err => { if (err && err.message === "none") back(); else direct(); });
             } catch (e) { direct(); }
             return;
@@ -1399,7 +1403,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 190, t: "10-22 20:54" };
+    const VER = { n: 191, t: "10-22 21:01" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
