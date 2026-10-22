@@ -1094,14 +1094,17 @@ createApp({
             const k = ++aTok; let fb = false;
             const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; NOCLIP.add(url); why = "AI 音频没有或失败，" + ms(performance.now() - T0) + "后退回"; sys(); };
             const fin = () => { if (k !== aTok) return; AUD.onended = AUD.onerror = null; if (u.onend) u.onend(new Event("end")); };
-            let tf = 0, cached = false; const dt = () => { AUD.onplaying = () => { AUD.onplaying = null; const tp = performance.now(); tmToast("AI 语音 " + ms(tp - T0) + (cached ? "（缓存）" : tf ? "（下载 " + ms(tf - T0) + " + 起播 " + ms(tp - tf) + "）" : "（本机语音包）")); }; };
+            let tf = 0, cached = false; const dt = () => { AUD.onplaying = () => { AUD.onplaying = null; const tp = performance.now(); tmToast("AI 语音 " + ms(tp - T0) + (cached ? "（缓存）" : tf ? "（读本机 " + ms(tf - T0) + " + 起播 " + ms(tp - tf) + "）" : "（本机语音包）")); }; };
             const direct = () => { if (k !== aTok) return; dt(); AUD.onended = fin; AUD.onerror = back; try { AUD.src = url; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); } catch (e) { back(); } };
             /* 先把整个小文件下载到内存再播放：iPhone 直接播网络音频要来回探测好几次，很慢 */
             const bl = BLOBS.get(url);
             const playBlob = (b) => { if (k !== aTok) return; if (!tf) tf = performance.now(); dt(); const bu = URL.createObjectURL(b); AUD.onended = () => { try { URL.revokeObjectURL(bu); } catch (e) {} fin(); }; AUD.onerror = back; AUD.src = bu; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); };
             try {
-              if (!USEBLOB) direct();
-              else if (bl) { cached = true; playBlob(bl); }
+              if (bl) { cached = true; playBlob(bl); }
+              else if (!USEBLOB) { /* 本机语音包：页面直接读缓存，不经过 Service Worker（它休眠后唤醒要几百毫秒） */
+                const cp = window.__clipCache || (window.__clipCache = window.caches ? caches.open("ielts-audio-v1") : Promise.reject());
+                cp.then(c => c.match(url)).then(r => r ? r.blob() : Promise.reject()).then(bb => { BLOBS.set(url, bb); if (BLOBS.size > 200) BLOBS.delete(BLOBS.keys().next().value); playBlob(bb); }).catch(() => direct());
+              }
               else fetch(url).then(r => { if (r.status === 404 || r.status === 403) { NOCLIP.add(url); throw new Error("none"); } if (!r.ok) throw new Error("bad"); return r.blob(); }).then(bb => { BLOBS.set(url, bb); if (BLOBS.size > 300) BLOBS.delete(BLOBS.keys().next().value); playBlob(bb); }).catch(err => { if (err && err.message === "none") back(); else direct(); });
             } catch (e) { direct(); }
             return;
@@ -1421,9 +1424,9 @@ createApp({
     const pkInit = async () => { pack.ok = true; pack.msg = "正在连接语音服务器…"; try { if (!("serviceWorker" in navigator) || !window.caches) { pack.msg = "当前环境不支持离线语音包（预览页里属正常，请在正式网站使用）。"; return; } await navigator.serviceWorker.register("sw.js?h=" + encodeURIComponent(new URL(PKA).host)); const r0 = await fetch(PKA + "manifest.txt?v=" + Math.floor(Date.now() / 600000)); if (!r0.ok) { pack.msg = "连不上语音服务器。"; return; } pkIds = (await r0.text()).split(/\s+/).filter(Boolean); if (pkIds.length < 100) { pack.msg = "语音清单不完整。"; return; } pack.total = pkIds.length; pack.msg = ""; const c = await caches.open(PKC); const have = new Set((await c.keys()).map(r => r.url)); pack.done = pkIds.filter(i => have.has(PKA + i + ".mp3")).length; pkIds.forEach(i => { if (have.has(PKA + i + ".mp3")) LOC.add(i); }); pkUsage(); } catch (e) { pack.msg = "无法连接语音服务器（预览页里属正常，请在正式网站使用）。"; } };
     const pkStart = async () => { if (pack.run) return; pack.run = true; pkStop = false; pack.fail = 0; pack.msg = ""; try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} const c = await caches.open(PKC); const have = new Set((await c.keys()).map(r => r.url)); const todo = pkIds.filter(i => !have.has(PKA + i + ".mp3")); pack.done = pkIds.length - todo.length; let p = 0; const worker = async () => { while (!pkStop) { const i = p++; if (i >= todo.length) return; const url = PKA + todo[i] + ".mp3"; try { const r = await fetch(url); if (r.ok) { await c.put(url, r); LOC.add(todo[i]); pack.done++; } else pack.fail++; } catch (e) { pack.fail++; if (/quota/i.test(String((e && e.name) || "") + String((e && e.message) || ""))) { pack.msg = "手机存储空间不足，已停止。"; pkStop = true; } } if (pack.done % 200 === 0) pkUsage(); } }; await Promise.all(Array.from({ length: 24 }, worker)); pack.run = false; pkUsage(); if (!pack.msg) pack.msg = pkStop ? "已暂停" : (pack.fail ? "有 " + pack.fail + " 个下载失败，再点一次可重试。" : "已全部下载。"); };
     const pkPause = () => { pkStop = true; };
-    const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await caches.delete(PKC); } catch (e) {} LOC.clear(); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
+    const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await caches.delete(PKC); } catch (e) {} LOC.clear(); window.__clipCache = null; pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     setTimeout(pkInit, 300);
-    const VER = { n: 198, t: "10-22 22:22" };
+    const VER = { n: 199, t: "10-22 22:29" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
