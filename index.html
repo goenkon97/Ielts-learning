@@ -1067,7 +1067,8 @@ createApp({
       const clipUrl = (t) => AUDB + fnv(String(t).replace(/\*\*|\+\+/g, "").replace(/’/g, "'").toLowerCase().split(/\s+/).filter(Boolean).join(" ").replace(/^([^\s]+?)'+$/, "$1")) + ".mp3";
       const _cn = speechSynthesis.cancel.bind(speechSynthesis);
       speechSynthesis.cancel = () => { aTok++; try { AUD.onended = AUD.onerror = null; AUD.pause(); } catch (e) {} _cn(); };
-      window.__clipUrl = clipUrl; const NOCLIP = new Set();
+      window.__clipUrl = clipUrl; const NOCLIP = new Set(); let MAN = null;
+      try { fetch(AUDB + "manifest.txt?v=" + Math.floor(Date.now() / 600000)).then(r => r.ok ? r.text() : Promise.reject()).then(t => { const s = new Set(t.split(/\s+/).filter(Boolean)); if (s.size > 100) { MAN = s; window.__clipMan = s; } }).catch(() => {}); } catch (e) {}
       /* iOS：系统朗读必须先在一次点击里"解锁"，否则音频文件缺失、过一会儿再退回系统发音时会没有声音 */
       let unlocked = false; const unlock = () => { if (unlocked) return; unlocked = true; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; _sp(u); } catch (e) {} };
       ["pointerdown", "touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
@@ -1077,6 +1078,7 @@ createApp({
         const sys = () => { if (speechSynthesis.getVoices().length) setTimeout(go, 80); else { speechSynthesis.addEventListener("voiceschanged", () => setTimeout(go, 80), { once: true }); setTimeout(go, 800); } };
         if (CLIPS && /^en-GB/i.test(u.lang || "")) {
           let url = ""; try { url = clipUrl(u.text); } catch (e) { url = ""; }
+          if (url && MAN && !MAN.has(url.slice(AUDB.length, -4))) url = ""; /* 清单里没有 = 没做这条音频，立刻用系统发音，不等网络 */
           if (url && !NOCLIP.has(url)) {
             const k = ++aTok; let fb = false;
             const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; NOCLIP.add(url); sys(); };
@@ -1391,7 +1393,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 188, t: "10-22 19:51" };
+    const VER = { n: 189, t: "10-22 19:59" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
