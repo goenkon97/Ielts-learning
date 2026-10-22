@@ -1067,16 +1067,19 @@ createApp({
       const clipUrl = (t) => AUDB + fnv(String(t).replace(/\*\*|\+\+/g, "").replace(/’/g, "'").toLowerCase().split(/\s+/).filter(Boolean).join(" ").replace(/^([^\s]+?)'+$/, "$1")) + ".mp3";
       const _cn = speechSynthesis.cancel.bind(speechSynthesis);
       speechSynthesis.cancel = () => { aTok++; try { AUD.onended = AUD.onerror = null; AUD.pause(); } catch (e) {} _cn(); };
-      window.__clipUrl = clipUrl;
+      window.__clipUrl = clipUrl; const NOCLIP = new Set();
+      /* iOS：系统朗读必须先在一次点击里"解锁"，否则音频文件缺失、过一会儿再退回系统发音时会没有声音 */
+      let unlocked = false; const unlock = () => { if (unlocked) return; unlocked = true; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; _sp(u); } catch (e) {} };
+      ["pointerdown", "touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
       speechSynthesis.speak = (u) => {
         const my = ++tok; let done = false;
         const go = () => { if (done || my !== tok) return; done = true; if (!u.voice) { const v = pick(u.lang); if (v) u.voice = v; } _sp(u); };
         const sys = () => { if (speechSynthesis.getVoices().length) setTimeout(go, 80); else { speechSynthesis.addEventListener("voiceschanged", () => setTimeout(go, 80), { once: true }); setTimeout(go, 800); } };
         if (CLIPS && /^en-GB/i.test(u.lang || "")) {
           let url = ""; try { url = clipUrl(u.text); } catch (e) { url = ""; }
-          if (url) {
+          if (url && !NOCLIP.has(url)) {
             const k = ++aTok; let fb = false;
-            const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; sys(); };
+            const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; NOCLIP.add(url); sys(); };
             AUD.onended = () => { if (k !== aTok) return; AUD.onended = AUD.onerror = null; if (u.onend) u.onend(new Event("end")); };
             AUD.onerror = back;
             try { AUD.src = url; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); } catch (e) { back(); }
@@ -1388,7 +1391,7 @@ createApp({
     };
     const dt = computed(() => detailW.value ? buildDetail(detailW.value) : null);
 
-    const VER = { n: 187, t: "10-22 19:44" };
+    const VER = { n: 188, t: "10-22 19:51" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
