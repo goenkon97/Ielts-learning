@@ -1094,7 +1094,7 @@ createApp({
             const k = ++aTok; let fb = false;
             const back = () => { if (k !== aTok || fb) return; fb = true; AUD.onended = AUD.onerror = null; NOCLIP.add(url); why = "AI 音频没有或失败，" + ms(performance.now() - T0) + "后退回"; sys(); };
             const fin = () => { if (k !== aTok) return; AUD.onended = AUD.onerror = null; if (u.onend) u.onend(new Event("end")); };
-            let tf = 0, cached = false; const dt = () => { AUD.onplaying = () => { AUD.onplaying = null; const tp = performance.now(); tmToast("AI 语音 " + ms(tp - T0) + (cached ? "（缓存）" : tf ? "（下载 " + ms(tf - T0) + " + 起播 " + ms(tp - tf) + "）" : "（直接播放）")); }; };
+            let tf = 0, cached = false; const dt = () => { AUD.onplaying = () => { AUD.onplaying = null; const tp = performance.now(); tmToast("AI 语音 " + ms(tp - T0) + (cached ? "（缓存）" : tf ? "（下载 " + ms(tf - T0) + " + 起播 " + ms(tp - tf) + "）" : "（本机语音包）")); }; };
             const direct = () => { if (k !== aTok) return; dt(); AUD.onended = fin; AUD.onerror = back; try { AUD.src = url; const pr = AUD.play(); if (pr && pr.catch) pr.catch(back); } catch (e) { back(); } };
             /* 先把整个小文件下载到内存再播放：iPhone 直接播网络音频要来回探测好几次，很慢 */
             const bl = BLOBS.get(url);
@@ -1423,7 +1423,7 @@ createApp({
     const pkPause = () => { pkStop = true; };
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await caches.delete(PKC); } catch (e) {} LOC.clear(); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     setTimeout(pkInit, 300);
-    const VER = { n: 197, t: "10-22 22:12" };
+    const VER = { n: 198, t: "10-22 22:22" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
