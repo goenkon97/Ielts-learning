@@ -388,6 +388,49 @@ mark .wd:hover,.st mark:hover .wd{background:transparent!important}
 article mark{transition:filter .12s}@media (hover:hover){article mark:hover{filter:brightness(.96)}}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dbtn{background:rgba(232,194,122,.14)!important;color:#e8c27a!important}:root:not([data-theme="light"]) .anav .dbtn{background:var(--chip)!important;color:var(--blue)!important}}
 /*end dbtn-gold*/
+
+/*bg-grain*/
+html,body{min-height:100vh}
+:root{--grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .36  0 0 0 0 .2  0 0 0 .28 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+body{--bgc:#f4f0e8;--bgl:var(--grain),radial-gradient(120% 40% at 50% -8%,#f6ecd2 0%,rgba(246,236,210,0) 60%);background-image:var(--bgl)}
+body:has(.hhead){--bgl:var(--grain),radial-gradient(120% 60% at 50% -10%,#f6ecd2 0%,rgba(246,236,210,0) 60%)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .95  0 0 0 0 .85  0 0 0 0 .65  0 0 0 .22 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");--grain-c:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .95  0 0 0 0 .85  0 0 0 0 .65  0 0 0 .08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+:root:not([data-theme="light"]) body{--bgc:#0b0a08;--bgl:var(--grain),radial-gradient(120% 40% at 50% -8%,#2a2111 0%,rgba(42,33,17,0) 60%)}
+:root:not([data-theme="light"]) body:has(.hhead){--bgl:var(--grain),radial-gradient(120% 60% at 50% -10%,#2a2111 0%,rgba(42,33,17,0) 60%)}}
+body,body:has(.hhead),:root:not([data-theme="light"]) body,:root:not([data-theme="light"]) body:has(.hhead){background-image:var(--bgl);background-repeat:repeat,no-repeat;background-size:180px 180px,100% 100%;background-attachment:fixed}
+header,.stick{background-color:var(--bgc);background-image:var(--bgl);background-repeat:repeat,no-repeat;background-size:180px 180px,100% 100%;background-attachment:fixed}
+/*end bg-grain*/
+
+/*page-frame*/
+body::before,body::after{content:"";position:fixed;pointer-events:none;z-index:50;border-style:solid;border-width:1px}
+body::before{top:calc(env(safe-area-inset-top,0px) + 6px);bottom:calc(env(safe-area-inset-bottom,0px) + 6px);left:7px;right:7px;border-radius:15px;border-color:rgba(184,137,46,.5)}
+body::after{top:calc(env(safe-area-inset-top,0px) + 10px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:11px;right:11px;border-radius:12px;border-color:rgba(184,137,46,.2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body::before{border-color:rgba(232,194,122,.38)}:root:not([data-theme="light"]) body::after{border-color:rgba(232,194,122,.14)}}
+/*end page-frame*/
+
+/*card-paper*/
+.hgrid .tile,main .card{background-image:var(--grain),linear-gradient(160deg,#fffefb,#fbf6ea);background-size:180px 180px,100% 100%;background-repeat:repeat,no-repeat;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(184,137,46,.16),0 1px 2px rgba(120,84,12,.12),0 12px 24px -12px rgba(120,84,12,.34),0 26px 38px -26px rgba(120,84,12,.24)}
+@media (hover:hover){.hgrid .tile:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(184,137,46,.16),0 2px 3px rgba(120,84,12,.14),0 18px 32px -12px rgba(120,84,12,.4),0 34px 46px -26px rgba(120,84,12,.26)}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hgrid .tile,:root:not([data-theme="light"]) main .card{background-image:var(--grain-c),linear-gradient(160deg,#1e1b15,#16140f);box-shadow:inset 0 1px 0 rgba(255,235,190,.07),inset 0 -1px 0 rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.5),0 14px 26px -12px rgba(0,0,0,.75),0 28px 40px -26px rgba(0,0,0,.6)}}
+/*end card-paper*/
+
+/*exb-clear*/
+.exb{background-color:#fffdf8;background-image:var(--grain-c2,var(--grain));background-size:180px 180px;border:1px solid #dccb9f;box-shadow:inset 0 2px 5px rgba(120,84,12,.10),0 1px 0 rgba(255,255,255,.8)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .exb{background-color:#100e0a;background-image:var(--grain-c);border-color:#4a3f22;box-shadow:inset 0 2px 6px rgba(0,0,0,.55),0 1px 0 rgba(255,235,190,.06)}}
+/*end exb-clear*/
+
+/*chip-grain*/
+.chip,.dbtn,.pchip,.exb mark{background-image:var(--grain);background-size:180px 180px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip,:root:not([data-theme="light"]) .dbtn,:root:not([data-theme="light"]) .pchip,:root:not([data-theme="light"]) .exb mark{background-image:var(--grain-c)}}
+/*end chip-grain*/
+
+/*grain-more*/
+.dbar,.hs,main .stick>input[type=search],.seg,.no,.acc,.bd,.use,.pt,.pkbtn,.close,.sw,.cats button:not(.on){background-image:var(--grain);background-size:180px 180px}
+.pager button,.pager select{background-image:var(--grain)!important;background-size:180px 180px!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dbar,:root:not([data-theme="light"]) .hs,:root:not([data-theme="light"]) main .stick>input[type=search],:root:not([data-theme="light"]) .seg,:root:not([data-theme="light"]) .no,:root:not([data-theme="light"]) .acc,:root:not([data-theme="light"]) .bd,:root:not([data-theme="light"]) .use,:root:not([data-theme="light"]) .pt,:root:not([data-theme="light"]) .pkbtn,:root:not([data-theme="light"]) .close,:root:not([data-theme="light"]) .sw,:root:not([data-theme="light"]) .cats button:not(.on){background-image:var(--grain-c)}
+:root:not([data-theme="light"]) .pager button,:root:not([data-theme="light"]) .pager select{background-image:var(--grain-c)!important}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) main .card h3{color:#f3ead7}}
+/*end grain-more*/
 </style>
 </head>
 <body>
@@ -1472,7 +1515,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 214, t: "10-23 15:21" };
+    const VER = { n: 222, t: "10-23 19:58" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
