@@ -407,6 +407,10 @@ html{overscroll-behavior-y:none;background-color:#f4f0e8}
 .hhead{grid-template-columns:auto minmax(0,1fr)}
 .hhead .hs{width:auto;max-width:150px;min-width:0;justify-self:end;box-sizing:border-box;flex:none}
 @media (max-width:380px){.hhead .hs{width:auto}}
+/* 手机长按弹出“存储图片”：浏览器把带纹理的背景当成了图片。文章卡片去掉纹理图，并关闭长按菜单 */
+*{-webkit-touch-callout:none}
+main .card:has(article){background-image:linear-gradient(160deg,#fffefb,#fbf6ea);background-size:100% 100%}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) main .card:has(article){background-image:linear-gradient(160deg,#1e1b15,#16140f)}}
 /*end bg-grain*/
 
 /*page-frame*/
@@ -1528,7 +1532,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 231, t: "10-23 20:50" };
+    const VER = { n: 232, t: "10-23 20:57" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
