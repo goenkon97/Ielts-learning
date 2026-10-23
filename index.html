@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<script>(function(){var d=document.documentElement,f=function(){d.classList.toggle("at-top",(window.pageYOffset||0)<=2)};f();addEventListener("scroll",f,{passive:true});var g=function(){d.style.setProperty("--cw",d.clientWidth+"px")};g();addEventListener("resize",g);addEventListener("load",g)})()</script>
+<script>(function(){var d=document.documentElement,f=function(){var h=Math.max(d.scrollHeight,document.body?document.body.scrollHeight:0);d.classList.toggle("at-end",(window.pageYOffset||0)+innerHeight>=h-3)};f();addEventListener("scroll",f,{passive:true});addEventListener("resize",f);addEventListener("load",f);setInterval(f,400)})()</script>
 <link rel="preconnect" href="https://audio.goenkon.com">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -404,20 +404,13 @@ header,.stick{background-color:var(--bgc);background-image:var(--bgl);background
 
 /*page-frame*/
 body{position:relative;min-height:100vh}
-body::before,body::after{content:"";position:absolute;pointer-events:none;z-index:-1;border-style:solid;border-width:1px}
-body::before{top:calc(env(safe-area-inset-top,0px) + 6px);bottom:calc(env(safe-area-inset-bottom,0px) + 6px);left:7px;right:7px;border-radius:15px;border-color:rgba(184,137,46,.5)}
-body::after{top:calc(env(safe-area-inset-top,0px) + 10px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:11px;right:11px;border-radius:12px;border-color:rgba(184,137,46,.2)}
-/* 线框随页面一起滚动，到页面最底部才会看到底边。顶栏/固定栏自带不透明底色会盖住线框的两侧，所以在它们上面补画侧边线；回到最顶部时顶栏再补画上边和圆角 */
-header::before,header::after,.stick::before,.stick::after{content:"";position:absolute;top:0;bottom:0;pointer-events:none;border:solid;border-width:0 1px}
-header::before{left:7px;right:7px;border-color:rgba(184,137,46,.5)}
-header::after{left:11px;right:11px;border-color:rgba(184,137,46,.2)}
-.stick::before{left:calc(7px - (var(--cw,100vw) - 100%) / 2);right:calc(7px - (var(--cw,100vw) - 100%) / 2);border-color:rgba(184,137,46,.5)}
-.stick::after{left:calc(11px - (var(--cw,100vw) - 100%) / 2);right:calc(11px - (var(--cw,100vw) - 100%) / 2);border-color:rgba(184,137,46,.2)}
-header::before{top:21px}header::after{top:22px}
-html::before,html::after{content:"";position:fixed;z-index:6;height:24px;pointer-events:none;border:solid;border-width:1px 1px 0}
-html::before{top:calc(env(safe-area-inset-top,0px) + 6px);left:7px;right:7px;border-radius:15px 15px 0 0;border-color:rgba(184,137,46,.5)}
-html::after{top:calc(env(safe-area-inset-top,0px) + 10px);left:11px;right:11px;border-radius:12px 12px 0 0;border-color:rgba(184,137,46,.2)}
-@media (prefers-color-scheme:dark){html:not([data-theme="light"])::before{border-color:rgba(232,194,122,.38)}html:not([data-theme="light"])::after{border-color:rgba(232,194,122,.14)}:root:not([data-theme="light"]) body::before,:root:not([data-theme="light"]) header::before,:root:not([data-theme="light"]) .stick::before{border-color:rgba(232,194,122,.38)}:root:not([data-theme="light"]) body::after,:root:not([data-theme="light"]) header::after,:root:not([data-theme="light"]) .stick::after{border-color:rgba(232,194,122,.14)}}
+/* 金色双线框：只画一次，固定在窗口上，盖在最上层但不挡操作。平时只有上边和两侧；滚到页面最底部时（html.at-end）补上底边 */
+html::before,html::after{content:"";position:fixed;z-index:8;pointer-events:none;border-style:solid;border-width:1px 1px 0}
+html::before{top:calc(env(safe-area-inset-top,0px) + 6px);bottom:-2px;left:7px;right:7px;border-radius:15px 15px 0 0;border-color:rgba(184,137,46,.5)}
+html::after{top:calc(env(safe-area-inset-top,0px) + 10px);bottom:-2px;left:11px;right:11px;border-radius:12px 12px 0 0;border-color:rgba(184,137,46,.2)}
+html.at-end::before{bottom:calc(env(safe-area-inset-bottom,0px) + 6px);border-width:1px;border-radius:15px}
+html.at-end::after{bottom:calc(env(safe-area-inset-bottom,0px) + 10px);border-width:1px;border-radius:12px}
+@media (prefers-color-scheme:dark){html:not([data-theme="light"])::before{border-color:rgba(232,194,122,.38)}html:not([data-theme="light"])::after{border-color:rgba(232,194,122,.14)}}
 header{padding-top:23px;padding-bottom:15px}
 /*end page-frame*/
 
@@ -1528,7 +1521,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 228, t: "10-23 20:22" };
+    const VER = { n: 229, t: "10-23 20:39" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
