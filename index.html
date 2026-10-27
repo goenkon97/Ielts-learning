@@ -499,7 +499,7 @@ header{padding-top:23px;padding-bottom:15px}
     <div class="stick">
     <input type="search" v-model="q" placeholder="搜索单词或中文">
     <div class="cats catpanel" v-if="co.syn"><button v-for="c in CATS" :key="c" :class="{on: cat===c}" @click="cat = c; co.syn = false">{{ c }} <em>{{ catN[c] }}</em></button></div>
-    <div class="row"><div class="rl"><button class="cf-t" type="button" :class="{on: co.syn}" @click="co.syn = !co.syn"><b>{{ cat }}</b><i>▾</i></button><span>{{ listAll.length }} 组</span></div><div class="pager" v-if="listAll.length > 10"><button :disabled="pgs.syn === 0" @click="pgs.syn--" aria-label="上一页">‹</button><select :value="pgs.syn" @change="pgs.syn = +$event.target.value"><option v-for="n in Math.ceil(listAll.length / 10)" :value="n - 1" :key="n">{{ (n - 1) * 10 + 1 }}–{{ Math.min(n * 10, listAll.length) }}</option></select><button :disabled="pgs.syn >= Math.ceil(listAll.length / 10) - 1" @click="pgs.syn++" aria-label="下一页">›</button></div></div>
+    <div class="row"><div class="rl"><button class="cf-t" type="button" :class="{on: co.syn}" @click="co.syn = !co.syn"><b>{{ cat }}</b><i>▾</i></button><span>{{ listAll.length }} 组</span></div><div class="pager" v-if="listAll.length > 10"><button :disabled="pgs.syn === 0" @click="pgs.syn--" aria-label="上一页">‹</button><select :value="pgs.syn" @change="pgs.syn = +$event.target.value"><option v-for="n in Math.ceil(listAll.length / 10)" :value="n - 1" :key="n">{{ n }} / {{ Math.ceil(listAll.length / 10) }}</option></select><button :disabled="pgs.syn >= Math.ceil(listAll.length / 10) - 1" @click="pgs.syn++" aria-label="下一页">›</button></div></div>
     </div>
     <div v-for="(r, i) in list" :key="r[0]" class="card sc" :class="{hid: quiz, show: shown[r[0]]}" @click="shown[r[0]] = true">
       <button class="close" v-if="shown[r[0]]" @click.stop="shown[r[0]] = false; tip = null">收起 ▴</button>
@@ -578,7 +578,7 @@ header{padding-top:23px;padding-bottom:15px}
     <div class="stick">
     <input type="search" v-model="q" placeholder="搜索短语或中文">
     <div class="cats catpanel" v-if="co.phr"><button v-for="c in PCATS" :key="c" :class="{on: pcat===c}" @click="pcat = c; co.phr = false">{{ c }} <em>{{ pcatN[c] }}</em></button></div>
-    <div class="row"><div class="rl"><button class="cf-t" type="button" :class="{on: co.phr}" @click="co.phr = !co.phr"><b>{{ pcat }}</b><i>▾</i></button><span>{{ plistAll.length }} 条</span></div><div class="pager" v-if="plistAll.length > 10"><button :disabled="pgs.phr === 0" @click="pgs.phr--" aria-label="上一页">‹</button><select :value="pgs.phr" @change="pgs.phr = +$event.target.value"><option v-for="n in Math.ceil(plistAll.length / 10)" :value="n - 1" :key="n">{{ (n - 1) * 10 + 1 }}–{{ Math.min(n * 10, plistAll.length) }}</option></select><button :disabled="pgs.phr >= Math.ceil(plistAll.length / 10) - 1" @click="pgs.phr++" aria-label="下一页">›</button></div></div>
+    <div class="row"><div class="rl"><button class="cf-t" type="button" :class="{on: co.phr}" @click="co.phr = !co.phr"><b>{{ pcat }}</b><i>▾</i></button><span>{{ plistAll.length }} 条</span></div><div class="pager" v-if="plistAll.length > 10"><button :disabled="pgs.phr === 0" @click="pgs.phr--" aria-label="上一页">‹</button><select :value="pgs.phr" @change="pgs.phr = +$event.target.value"><option v-for="n in Math.ceil(plistAll.length / 10)" :value="n - 1" :key="n">{{ n }} / {{ Math.ceil(plistAll.length / 10) }}</option></select><button :disabled="pgs.phr >= Math.ceil(plistAll.length / 10) - 1" @click="pgs.phr++" aria-label="下一页">›</button></div></div>
     </div>
     <template v-for="(r, i) in plist" :key="r[2]">
       <h3 class="lkh" v-if="pcat === '全部' && (i === 0 || plist[i-1][0] !== r[0])">{{ r[0] }} <small>{{ r[1] }}</small></h3>
@@ -670,7 +670,7 @@ header{padding-top:23px;padding-bottom:15px}
     <div class="stick">
     <input type="search" v-model="q" placeholder="搜索短语或中文">
     <div class="cats catpanel" v-if="co.link"><button v-for="c in LCATS" :key="c" :class="{on: lcat===c}" @click="lcat = c; co.link = false">{{ c }} <em>{{ lcatN[c] }}</em></button></div>
-    <div class="row"><div class="rl"><button class="cf-t" type="button" :class="{on: co.link}" @click="co.link = !co.link"><b>{{ lcat }}</b><i>▾</i></button><span>{{ llistAll.length }} 条</span></div><div class="pager" v-if="llistAll.length > 10"><button :disabled="pgs.link === 0" @click="pgs.link--" aria-label="上一页">‹</button><select :value="pgs.link" @change="pgs.link = +$event.target.value"><option v-for="n in Math.ceil(llistAll.length / 10)" :value="n - 1" :key="n">{{ (n - 1) * 10 + 1 }}–{{ Math.min(n * 10, llistAll.length) }}</option></select><button :disabled="pgs.link >= Math.ceil(llistAll.length / 10) - 1" @click="pgs.link++" aria-label="下一页">›</button></div></div>
+    <div class="row"><div class="rl"><button class="cf-t" type="button" :class="{on: co.link}" @click="co.link = !co.link"><b>{{ lcat }}</b><i>▾</i></button><span>{{ llistAll.length }} 条</span></div><div class="pager" v-if="llistAll.length > 10"><button :disabled="pgs.link === 0" @click="pgs.link--" aria-label="上一页">‹</button><select :value="pgs.link" @change="pgs.link = +$event.target.value"><option v-for="n in Math.ceil(llistAll.length / 10)" :value="n - 1" :key="n">{{ n }} / {{ Math.ceil(llistAll.length / 10) }}</option></select><button :disabled="pgs.link >= Math.ceil(llistAll.length / 10) - 1" @click="pgs.link++" aria-label="下一页">›</button></div></div>
     </div>
     <template v-for="(r, i) in llist" :key="r[2]">
       <h3 class="lkh" v-if="lcat === '全部' && (i === 0 || llist[i-1][0] !== r[0])">{{ r[0] }} <small>{{ r[1] }}</small></h3>
@@ -1547,7 +1547,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 241, t: "10-24 07:35" };
+    const VER = { n: 243, t: "10-27 21:19" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
