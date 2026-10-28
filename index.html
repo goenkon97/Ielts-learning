@@ -36,6 +36,7 @@ main{max-width:720px;margin:0 auto;padding:8px 20px 48px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pm,:root:not([data-theme="light"]) .pchip{background:#3d1e10;color:#ff9a6b}}
 .trbtn{margin:12px 0 0}.tr{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line);color:var(--sub);font-size:15px}
 .kw h3{margin:0 0 10px;font-size:17px}.kw h3 small{font-weight:400;color:var(--sub);font-size:12px;margin-left:6px}
+.pkmask .vidbox{max-width:900px;padding:10px;background:#000}.vidbox video{display:block;width:100%;max-height:75vh;border-radius:10px;background:#000}.vidbox .pka{margin-top:8px;justify-content:center}
 .expbar{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}.expbar .dbtn{margin:0;padding:6px 14px;font-size:14px}.expbar .dbtn:disabled{opacity:.5;cursor:default}.expbar small{color:var(--sub,#8e8e93);font-size:13px}
 .anav{display:flex;justify-content:space-between;margin:4px 0 12px}.anav .dbtn{margin:0;padding:6px 14px;font-size:14px}.anav .dbtn:disabled{opacity:.4;cursor:default}
 .lkh{margin:18px 4px 8px;font-size:17px}.lkh small{color:var(--sub);font-weight:400;font-size:12px;margin-left:6px}
@@ -709,6 +710,7 @@ header{padding-top:23px;padding-bottom:15px}
 
   <template v-else-if="view==='cat'">
     <p class="lead" v-if="catArts.length">共 {{ catArts.length }} 篇，Level 越高越难</p>
+    <div class="expbar" v-if="catArts.length"><button class="dbtn" :disabled="expBusy" @click="exportCat">导出本模块全部视频（zip）</button><button class="dbtn" v-if="expBusy" @click="expStop = true">停止</button><small v-if="expMsg">{{ expMsg }}</small></div>
     <div class="card" v-else style="text-align:center;color:var(--sub);padding:28px 16px">这个话题还没有文章<br><small>等你添加真题文章后会显示在这里</small></div>
     <button class="card alist ca" v-for="(a, i) in catArts" :key="a.idx" @click="openArt(a.idx)">
       <span class="lvb" :class="'l' + Math.ceil(a.item[3] / 2)">{{ a.item[3] >= 10 ? '高阶' : 'Lv ' + a.item[3] }}</span>
@@ -720,7 +722,11 @@ header{padding-top:23px;padding-bottom:15px}
   <div class="artview" v-if="artLoaded" v-show="view === 'art'">
     <h1>{{ ART[artIdx][0] }}</h1>
     <p class="lead"><span class="lvb" :class="'l' + Math.ceil(ART[artIdx][3] / 2)">{{ ART[artIdx][3] >= 10 ? '高阶' : 'Level ' + ART[artIdx][3] }}</span> {{ bandOf(ART[artIdx][3]) }} · {{ ACATS[ART[artIdx][5]][0] }}</p>
-    <div class="expbar"><button class="dbtn" :disabled="expBusy" @click="exportVideo">导出视频（语音＋字幕）</button><small v-if="expMsg">{{ expMsg }}</small></div>
+    <div class="expbar"><button class="dbtn" v-if="artVideo" @click="vidOpen = true">观看视频</button><button class="dbtn" :disabled="expBusy" @click="exportVideo">导出视频（语音＋字幕）</button><small v-if="expMsg">{{ expMsg }}</small></div>
+    <div class="pkmask" v-if="vidOpen && artVideo" @click.self="vidOpen = false"><div class="card pk vidbox">
+      <video :src="artVideo" controls autoplay playsinline preload="metadata"></video>
+      <div class="pka"><button class="ghost" @click="vidOpen = false">关闭</button></div>
+    </div></div>
     <div class="card"><article style="position:relative" @mouseleave="hideTip"><p v-html="wrap(stHtml)" @dblclick="artDbl($event)" @click="artClick($event)" @pointerdown="artDown($event)" @pointermove="artMove" @pointerup="lpCancel" @pointerleave="lpCancel" @pointercancel="lpCancel" @contextmenu.prevent></p><p class="tr" v-if="!artBlocks" v-html="ART[artIdx][4].replace(/¶/g, '<br><br>')"></p></article>
     </div>
 
@@ -1495,10 +1501,15 @@ createApp({
     const pickS = (w) => { sq.value = ""; openDetail(w); };
     const artPairs = computed(() => { const a = ART[artIdx.value]; const e = (a[2].replace(/\*\*|\+\+/g, "").replace(/¶/g, " ").match(/[^.!?]+(?:[.!?]+["”’']*|$)/g) || []).map(x => x.trim()).filter(Boolean); const z = (a[4].replace(/¶/g, "").match(/[^。！？]+(?:[。！？]+[”’」』）)]*|$)/g) || []).map(x => x.trim()).filter(Boolean); if (e.length === z.length) return e.map((x, i) => [x, z[i]]); return [["", a[4].replace(/¶/g, " ")]]; });
     const openCat = (ci) => { topicCat.value = ci; view.value = "cat"; window.scrollTo({ top: 0 }); };
-    /* ===== 导出视频：把本篇文章每句的本机 AI 语音拼成一条音轨，配黑底字幕，在浏览器里直接编码成 mp4 ===== */
+    /* ===== 导出视频：把文章每句的本机 AI 语音拼成一条音轨，配黑底字幕，在浏览器里直接编码成 mp4 ===== */
     // 原理：①从 IndexedDB 取出每句的 mp3 → ②解码成「声音采样点」(一长串小数，每秒 44100 个) → ③按时间线拼进一个大数组
     //       ④用 canvas 画字幕画面 → ⑤VideoEncoder / AudioEncoder 压缩 → ⑥mp4-muxer 把两条流装进 mp4 文件 → ⑦下载
-    const expBusy = ref(false), expMsg = ref("");
+    const expBusy = ref(false), expMsg = ref(""), expStop = ref(false);
+    /* 配好画面的文章视频：视频文件放在网站同一目录的 videos/ 下，按文章标题对应；没有视频的文章不显示"观看视频" */
+    const ART_VIDEO = { "Rethinking How We Measure Learning": "videos/rethinking-how-we-measure-learning.mp4" };
+    const artVideo = computed(() => ART_VIDEO[ART[artIdx.value][0]] || "");
+    const vidOpen = ref(false);
+    watch(artIdx, () => { vidOpen.value = false; });
     const expLoadLib = () => new Promise((res, rej) => {
       if (window.Mp4Muxer) return res();
       const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.js";
@@ -1512,94 +1523,147 @@ createApp({
       if (cur.trim()) lines.push(cur.trimEnd());
       return lines;
     };
+    // 把第 idx 篇拆成句子：英文来自原文，中文来自译文（句数对不上就只放英文）
+    const expSplit = (idx) => {
+      const a = ART[idx];
+      const zs = (a[4].replace(/¶/g, "").match(/[^。！？]+(?:[。！？]+[”’」』）)]*|$)/g) || []).map(x => x.trim()).filter(Boolean);
+      const sents = [];
+      a[2].split("¶").forEach((para) => { (para.replace(/\*\*|\+\+/g, "").match(/[^.!?]+(?:[.!?]+["”’']*|$)/g) || []).map(x => x.trim()).filter(Boolean).forEach((s, si, arr) => { sents.push({ en: s, endPara: si === arr.length - 1 }); }); });
+      sents.forEach((s, i) => { s.zh = zs.length === sents.length ? zs[i] : ""; });
+      return sents;
+    };
+    const expSave = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000); };
+    const expFile = (s) => s.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim();
+    // 做一篇：返回 { blob, miss }；askMiss=true 时缺语音会先问一声，用户取消就返回 null
+    const buildVideo = async (idx, say, askMiss) => {
+      const title = ART[idx][0], sents = expSplit(idx);
+      if (!sents.length) return null;
+      await expLoadLib();
+      const SR = 44100, AUDB_ = window.__AUDB || "https://audio.goenkon.com/";
+      const dec = new OfflineAudioContext(1, 1, SR);
+      // ② 逐句取语音并解码；没有本机语音的句子留一段静音（浏览器自带朗读无法录进文件）
+      let miss = 0;
+      for (let i = 0; i < sents.length; i++) {
+        const s = sents[i]; s.pcm = null;
+        try {
+          const id = window.__clipUrl(s.en).slice(AUDB_.length, -4);
+          const ab = window.__idbGet ? await window.__idbGet(id) : null;
+          if (ab) { const buf = await dec.decodeAudioData(ab.slice(0)); s.pcm = buf.getChannelData(0); }   // 取第一声道，单声道足够
+        } catch (e) { s.pcm = null; }
+        if (!s.pcm) { miss++; s.pcm = new Float32Array(Math.round(SR * Math.max(1.5, s.en.split(/\s+/).length * 0.4))); }
+        say("读取语音 " + (i + 1) + "/" + sents.length);
+        if (i % 8 === 7) await new Promise(r => setTimeout(r, 0));
+      }
+      if (miss && askMiss && !confirm("有 " + miss + " 句没有本机 AI 语音（语音包没下载全），这些句子在视频里只有字幕、没有声音。继续导出吗？")) return null;
+      // ③ 排时间线：每句后停 0.6 秒，段落结束停 1.4 秒；片头 1 秒、片尾 1 秒
+      let t = 1.0;
+      sents.forEach(s => { s.t0 = t; s.dur = s.pcm.length / SR; t += s.dur + (s.endPara ? 1.4 : 0.6); });
+      const total = t + 0.4;
+      const mix = new Float32Array(Math.ceil(total * SR));
+      sents.forEach(s => { mix.set(s.pcm, Math.round(s.t0 * SR)); s.pcm = null; });   // 把每句的采样点放到它的起始位置
+      // ④ 选编码：优先 H.264 + AAC（所有播放器通用），不支持就退到 VP9 + Opus
+      const W = 1280, H = 720, FPS = 10;
+      let vc = null, ac_ = null;
+      for (const c of [["avc1.4d0020", "avc"], ["avc1.42001f", "avc"], ["vp09.00.10.08", "vp9"]]) { try { if ((await VideoEncoder.isConfigSupported({ codec: c[0], width: W, height: H, bitrate: 600000, framerate: FPS })).supported) { vc = c; break; } } catch (e) {} }
+      for (const c of [["mp4a.40.2", "aac"], ["opus", "opus"]]) { try { if ((await AudioEncoder.isConfigSupported({ codec: c[0], sampleRate: SR, numberOfChannels: 1, bitrate: 96000 })).supported) { ac_ = c; break; } } catch (e) {} }
+      if (!vc || !ac_) throw new Error("codec");
+      const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: vc[1], width: W, height: H, frameRate: FPS }, audio: { codec: ac_[1], numberOfChannels: 1, sampleRate: SR }, fastStart: "in-memory" });
+      let encErr = null;
+      const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { encErr = e; } });
+      ve.configure({ codec: vc[0], width: W, height: H, bitrate: 600000, framerate: FPS });
+      const ae = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => { encErr = e; } });
+      ae.configure({ codec: ac_[0], sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
+      // ⑤ 音轨：每次交给编码器 1 秒
+      for (let o = 0; o < mix.length; o += SR) {
+        const part = mix.subarray(o, Math.min(o + SR, mix.length));
+        const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: part.length, numberOfChannels: 1, timestamp: Math.round(o / SR * 1e6), data: part });
+        ae.encode(ad); ad.close();
+        if (encErr) throw encErr;
+      }
+      // ⑥ 画面：黑底；标题在上，当前句英文（白）+ 中文（灰）居中
+      const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+      const FF = '-apple-system,"PingFang SC","Hiragino Sans","Microsoft YaHei",sans-serif';
+      const nFrames = Math.ceil(total * FPS);
+      let si = -1;
+      for (let f = 0; f < nFrames; f++) {
+        const ts = f / FPS;
+        while (si + 1 < sents.length && sents[si + 1].t0 <= ts) si++;   // 当前该显示第几句（片头时 si=-1）
+        const cur = si >= 0 && ts < sents[si].t0 + sents[si].dur + 0.5 ? sents[si] : null;
+        g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+        g.textAlign = "center"; g.textBaseline = "alphabetic";
+        g.fillStyle = "#6e6e73"; g.font = "600 26px " + FF; g.fillText(title, W / 2, 70);
+        if (cur) {
+          g.font = "600 46px " + FF; const el = expWrap(g, cur.en, W - 200);
+          g.font = "400 32px " + FF; const zl = expWrap(g, cur.zh, W - 240);
+          const hh = el.length * 62 + (zl.length ? 20 + zl.length * 46 : 0); let y = (H - hh) / 2 + 46;
+          g.fillStyle = "#fff"; g.font = "600 46px " + FF; el.forEach(l => { g.fillText(l, W / 2, y); y += 62; });
+          y += zl.length ? 10 : 0;
+          g.fillStyle = "#a1a1a6"; g.font = "400 32px " + FF; zl.forEach(l => { g.fillText(l, W / 2, y); y += 46; });
+        }
+        g.fillStyle = "#2c2c2e"; g.fillRect(0, H - 6, W, 6); g.fillStyle = "#0a84ff"; g.fillRect(0, H - 6, W * ts / total, 6);   // 底部进度条
+        const vf = new VideoFrame(cv, { timestamp: Math.round(ts * 1e6), duration: Math.round(1e6 / FPS) });
+        ve.encode(vf, { keyFrame: f % (FPS * 5) === 0 }); vf.close();
+        if (encErr) throw encErr;
+        if (f % 20 === 19) { say("生成视频 " + Math.round(f / nFrames * 100) + "%"); await new Promise(r => setTimeout(r, 0)); while (ve.encodeQueueSize > 30) await new Promise(r => setTimeout(r, 10)); }
+      }
+      say("正在封装 mp4…");
+      await ve.flush(); await ae.flush(); ve.close(); ae.close(); muxer.finalize();
+      return { blob: new Blob([muxer.target.buffer], { type: "video/mp4" }), miss };
+    };
+    const expErr = (e) => e && e.message === "lib" ? "导出组件加载失败，请联网后重试。" : e && e.message === "codec" ? "这个浏览器没有可用的视频编码器。" : "导出失败：" + (e && e.message || e);
+    // 导出当前这一篇
     const exportVideo = async () => {
       if (expBusy.value) return;
       if (!window.VideoEncoder || !window.AudioEncoder) { expMsg.value = "当前浏览器不支持导出（需要较新的 Chrome、Edge 或 Safari）。"; return; }
-      const a = ART[artIdx.value], title = a[0];
-      // ① 把文章拆成句子：英文来自原文，中文来自已对齐的译文（对不上就只放英文）
-      const zhs = artBlocks.value ? artBlocks.value.map(b => b.zh) : [];
-      const sents = []; let n = 0;
-      a[2].split("¶").forEach((para) => { (para.replace(/\*\*|\+\+/g, "").match(/[^.!?]+(?:[.!?]+["”’']*|$)/g) || []).map(x => x.trim()).filter(Boolean).forEach((s, si, arr) => { sents.push({ en: s, zh: zhs.length ? zhs[n] || "" : "", endPara: si === arr.length - 1 }); n++; }); });
-      if (!sents.length) return;
       expBusy.value = true; expMsg.value = "正在读取本机语音…";
       try {
-        await expLoadLib();
-        const SR = 44100, AUDB_ = window.__AUDB || "https://audio.goenkon.com/";
-        const dec = new OfflineAudioContext(1, 1, SR);
-        // ② 逐句取语音并解码；没有本机语音的句子留一段静音（浏览器自带朗读无法录进文件）
-        let miss = 0;
-        for (let i = 0; i < sents.length; i++) {
-          const s = sents[i]; s.pcm = null;
-          try {
-            const id = window.__clipUrl(s.en).slice(AUDB_.length, -4);
-            const ab = window.__idbGet ? await window.__idbGet(id) : null;
-            if (ab) { const buf = await dec.decodeAudioData(ab.slice(0)); s.pcm = buf.getChannelData(0); }   // 取第一声道，单声道足够
-          } catch (e) { s.pcm = null; }
-          if (!s.pcm) { miss++; s.pcm = new Float32Array(Math.round(SR * Math.max(1.5, s.en.split(/\s+/).length * 0.4))); }
-          expMsg.value = "读取语音 " + (i + 1) + "/" + sents.length;
-          if (i % 8 === 7) await new Promise(r => setTimeout(r, 0));
-        }
-        if (miss && !confirm("有 " + miss + " 句没有本机 AI 语音（语音包没下载全），这些句子在视频里只有字幕、没有声音。继续导出吗？")) { expMsg.value = ""; expBusy.value = false; return; }
-        // ③ 排时间线：每句后停 0.6 秒，段落结束停 1.4 秒；片头 1 秒、片尾 1 秒
-        let t = 1.0; const lead = 1.0;
-        sents.forEach(s => { s.t0 = t; s.dur = s.pcm.length / SR; t += s.dur + (s.endPara ? 1.4 : 0.6); });
-        const total = t + 0.4;
-        const mix = new Float32Array(Math.ceil(total * SR));
-        sents.forEach(s => { mix.set(s.pcm, Math.round(s.t0 * SR)); });   // 把每句的采样点放到它的起始位置
-        // ④ 选编码：优先 H.264 + AAC（所有播放器通用），不支持就退到 VP9 + Opus
-        const W = 1280, H = 720, FPS = 10;
-        let vc = null, ac_ = null;
-        for (const c of [["avc1.4d0020", "avc"], ["avc1.42001f", "avc"], ["vp09.00.10.08", "vp9"]]) { try { if ((await VideoEncoder.isConfigSupported({ codec: c[0], width: W, height: H, bitrate: 600000, framerate: FPS })).supported) { vc = c; break; } } catch (e) {} }
-        for (const c of [["mp4a.40.2", "aac"], ["opus", "opus"]]) { try { if ((await AudioEncoder.isConfigSupported({ codec: c[0], sampleRate: SR, numberOfChannels: 1, bitrate: 96000 })).supported) { ac_ = c; break; } } catch (e) {} }
-        if (!vc || !ac_) throw new Error("codec");
-        const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: vc[1], width: W, height: H, frameRate: FPS }, audio: { codec: ac_[1], numberOfChannels: 1, sampleRate: SR }, fastStart: "in-memory" });
-        let encErr = null;
-        const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { encErr = e; } });
-        ve.configure({ codec: vc[0], width: W, height: H, bitrate: 600000, framerate: FPS });
-        const ae = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => { encErr = e; } });
-        ae.configure({ codec: ac_[0], sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
-        // ⑤ 音轨：每次交给编码器 1 秒
-        for (let o = 0; o < mix.length; o += SR) {
-          const part = mix.subarray(o, Math.min(o + SR, mix.length));
-          const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: part.length, numberOfChannels: 1, timestamp: Math.round(o / SR * 1e6), data: part });
-          ae.encode(ad); ad.close();
-          if (encErr) throw encErr;
-        }
-        // ⑥ 画面：黑底；标题在上，当前句英文（白）+ 中文（灰）居中
-        const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-        const FF = '-apple-system,"PingFang SC","Hiragino Sans","Microsoft YaHei",sans-serif';
-        const nFrames = Math.ceil(total * FPS);
-        let si = -1;
-        for (let f = 0; f < nFrames; f++) {
-          const ts = f / FPS;
-          while (si + 1 < sents.length && sents[si + 1].t0 <= ts) si++;   // 当前该显示第几句（片头时 si=-1）
-          const cur = si >= 0 && ts < sents[si].t0 + sents[si].dur + 0.5 ? sents[si] : null;
-          g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
-          g.textAlign = "center"; g.textBaseline = "alphabetic";
-          g.fillStyle = "#6e6e73"; g.font = "600 26px " + FF; g.fillText(title, W / 2, 70);
-          if (cur) {
-            g.font = "600 46px " + FF; const el = expWrap(g, cur.en, W - 200);
-            g.font = "400 32px " + FF; const zl = expWrap(g, cur.zh, W - 240);
-            const hh = el.length * 62 + (zl.length ? 20 + zl.length * 46 : 0); let y = (H - hh) / 2 + 46;
-            g.fillStyle = "#fff"; g.font = "600 46px " + FF; el.forEach(l => { g.fillText(l, W / 2, y); y += 62; });
-            y += zl.length ? 10 : 0;
-            g.fillStyle = "#a1a1a6"; g.font = "400 32px " + FF; zl.forEach(l => { g.fillText(l, W / 2, y); y += 46; });
-          }
-          g.fillStyle = "#2c2c2e"; g.fillRect(0, H - 6, W, 6); g.fillStyle = "#0a84ff"; g.fillRect(0, H - 6, W * ts / total, 6);   // 底部进度条
-          const vf = new VideoFrame(cv, { timestamp: Math.round(ts * 1e6), duration: Math.round(1e6 / FPS) });
-          ve.encode(vf, { keyFrame: f % (FPS * 5) === 0 }); vf.close();
-          if (encErr) throw encErr;
-          if (f % 20 === 19) { expMsg.value = "生成视频 " + Math.round(f / nFrames * 100) + "%"; await new Promise(r => setTimeout(r, 0)); while (ve.encodeQueueSize > 30) await new Promise(r => setTimeout(r, 10)); }
-        }
-        expMsg.value = "正在封装 mp4…";
-        await ve.flush(); await ae.flush(); ve.close(); ae.close(); muxer.finalize();
-        const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
-        const aEl = document.createElement("a"); aEl.href = URL.createObjectURL(blob); aEl.download = title.replace(/[\\/:*?"<>|]/g, " ").trim() + ".mp4"; document.body.appendChild(aEl); aEl.click(); aEl.remove();
-        setTimeout(() => URL.revokeObjectURL(aEl.href), 60000);
-        expMsg.value = "已导出 " + (blob.size / 1048576).toFixed(1) + " MB" + (miss ? "（" + miss + " 句无语音）" : "");
-      } catch (e) {
-        expMsg.value = e && e.message === "lib" ? "导出组件加载失败，请联网后重试。" : e && e.message === "codec" ? "这个浏览器没有可用的视频编码器。" : "导出失败：" + (e && e.message || e);
+        const r = await buildVideo(artIdx.value, m => { expMsg.value = m; }, true);
+        if (!r) { expMsg.value = ""; }
+        else { expSave(r.blob, expFile(ART[artIdx.value][0]) + ".mp4"); expMsg.value = "已导出 " + (r.blob.size / 1048576).toFixed(1) + " MB" + (r.miss ? "（" + r.miss + " 句无语音）" : ""); }
+      } catch (e) { expMsg.value = expErr(e); }
+      expBusy.value = false;
+    };
+    /* ===== 整个模块一次导出：每篇做成一个 mp4，最后打成一个 zip（zip 用"仅存储"方式，不压缩，视频本来就压过了） ===== */
+    const crcT = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+    const crc32 = (u8) => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = crcT[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+    const makeZip = async (files) => {   // files: [{ name, blob }]；zip 结构 = 每个文件的「本地头 + 内容」+ 末尾「中央目录」+「结束记录」
+      const parts = [], central = [], enc = new TextEncoder(); let off = 0;
+      for (const f of files) {
+        const data = new Uint8Array(await f.blob.arrayBuffer()), nm = enc.encode(f.name), crc = crc32(data), sz = data.length;
+        const h = new DataView(new ArrayBuffer(30));
+        h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(12, 0x21, true);   // 0x0800 = 文件名是 UTF-8
+        h.setUint32(14, crc, true); h.setUint32(18, sz, true); h.setUint32(22, sz, true); h.setUint16(26, nm.length, true);
+        parts.push(h.buffer, nm, data);
+        const c = new DataView(new ArrayBuffer(46));
+        c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(14, 0x21, true);
+        c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+        central.push(c.buffer, nm); off += 30 + nm.length + sz;
       }
+      const csz = central.reduce((a, b) => a + b.byteLength, 0);
+      const e = new DataView(new ArrayBuffer(22));
+      e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csz, true); e.setUint32(16, off, true);
+      return new Blob([...parts, ...central, e.buffer], { type: "application/zip" });
+    };
+    const exportCat = async () => {
+      if (expBusy.value) return;
+      if (!window.VideoEncoder || !window.AudioEncoder) { expMsg.value = "当前浏览器不支持导出（需要较新的 Chrome、Edge 或 Safari）。"; return; }
+      const list = catArts.value.slice(), catName = ACATS[topicCat.value][0];
+      if (!list.length) return;
+      expBusy.value = true; expStop.value = false; const files = []; let missArts = 0;
+      try {
+        for (let k = 0; k < list.length; k++) {
+          if (expStop.value) break;
+          const idx = list[k].idx, head = "（" + (k + 1) + "/" + list.length + "）" + ART[idx][0] + "：";
+          const r = await buildVideo(idx, m => { expMsg.value = head + m; }, false);
+          if (r) { files.push({ name: String(k + 1).padStart(2, "0") + " " + expFile(ART[idx][0]) + ".mp4", blob: r.blob }); if (r.miss) missArts++; }
+        }
+        if (files.length) {
+          expMsg.value = "正在打包 " + files.length + " 个视频…";
+          const z = await makeZip(files);
+          expSave(z, expFile(ACATS[topicCat.value][1]) + "-videos.zip");   // 文件名用英文，避免个别浏览器丢掉中文名
+          expMsg.value = (expStop.value ? "已停止，已打包前 " : "已导出 ") + files.length + " 篇，共 " + (z.size / 1048576).toFixed(0) + " MB" + (missArts ? "；其中 " + missArts + " 篇有句子缺语音（静音）" : "");
+        } else expMsg.value = "已停止";
+      } catch (e) { expMsg.value = expErr(e); }
       expBusy.value = false;
     };
     const openArt = (i) => { artIdx.value = i; topicCat.value = ART[i][5]; view.value = "art"; };
@@ -1758,7 +1822,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 248, t: "10-28 19:22" };
+    const VER = { n: 251, t: "10-28 20:41" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -1859,7 +1923,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { expBusy, expMsg, exportVideo, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
