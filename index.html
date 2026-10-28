@@ -23,7 +23,7 @@ header b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowra
 .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.2)}
 main{max-width:720px;margin:0 auto;padding:8px 20px 48px}
 .dbar+.dall{margin-top:52px}
-.pkmask{position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:20px}.pkmask .pk{width:100%;max-width:380px;margin:0}.pkbtn{display:inline-flex;align-items:center;justify-content:center;height:24px;min-width:24px;padding:0 6px;border-radius:99px;border:0;background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;flex:none}.pkbtn:active{transform:scale(.94)}.pk{margin-top:14px;padding:16px 18px}.pkh{display:flex;justify-content:space-between;align-items:baseline}.pkh small{color:var(--sub)}.pkt{margin:6px 0 10px;font-size:13px;color:var(--sub);line-height:1.5}.pkb{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.pkb i{display:block;height:100%;background:var(--blue);transition:width .3s}.pka{display:flex;gap:10px;margin-top:12px}.pka button{border:0;border-radius:10px;padding:8px 16px;background:var(--blue);color:#fff;font-size:14px;cursor:pointer}.pka button.ghost{background:var(--line);color:var(--text)}.pkm{display:block;margin-top:8px;color:var(--sub);font-size:12px}
+.pkmask{position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:20px}.pkmask .pk{width:100%;max-width:380px;margin:0}.pkbtn{display:inline-flex;align-items:center;justify-content:center;height:24px;min-width:24px;padding:0 6px;border-radius:99px;border:0;background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;flex:none}.pkbtn:active{transform:scale(.94)}.pk{margin-top:14px;padding:16px 18px}.pkh{display:flex;justify-content:space-between;align-items:baseline}.pkh small{color:var(--sub)}.pkt{margin:6px 0 10px;font-size:13px;color:var(--sub);line-height:1.5}.pkb{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.pkb i{display:block;height:100%;background:var(--blue);transition:width .3s}.pka{display:flex;gap:10px;margin-top:12px}.pka button{border:0;border-radius:10px;padding:8px 16px;background:var(--blue);color:#fff;font-size:14px;cursor:pointer}.pka button.ghost{background:var(--line);color:var(--text)}.lguser{display:flex;align-items:center;gap:12px;margin:10px 0}.lguser img{width:44px;height:44px;border-radius:50%}.lguser b{display:block;font-size:15px}.lguser small{color:var(--sub);font-size:12px;word-break:break-all}.lgbox{display:flex;justify-content:center;min-height:44px;margin-top:8px}.lgbtn img{width:20px;height:20px;border-radius:50%;display:block}.lgbtn svg{display:block}.pkm{display:block;margin-top:8px;color:var(--sub);font-size:12px}
 .hgrid .tile{min-height:132px}.hgrid .tile h2{font-size:20px}.hgrid .tile p{font-size:13px}
 .alist{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border:0;color:inherit;font:inherit;cursor:pointer;margin-bottom:10px}
 .alist b{font-size:17px}.alist small{color:var(--sub)}
@@ -474,7 +474,7 @@ header{padding-top:23px;padding-bottom:15px}
 </header>
 <main>
   <template v-if="view==='home'">
-    <div class="hhead"><div class="sig"><span class="nm">Goen Kon</span><button class="ltag" @click="lang = lang==='uk' ? 'us' : 'uk'" aria-label="切换英音/美音">{{ lang==='uk' ? '英' : '美' }}</button><button class="pkbtn" v-if="pack.ok" @click="pkOpen=true" aria-label="离线语音包"><svg v-if="!pack.total || (pack.done<pack.total && !pack.run)" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><b v-else-if="pack.run">{{ Math.floor(pack.done / pack.total * 100) }}%</b><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>
+    <div class="hhead"><div class="sig"><span class="nm">Goen Kon</span><button class="ltag" @click="lang = lang==='uk' ? 'us' : 'uk'" aria-label="切换英音/美音">{{ lang==='uk' ? '英' : '美' }}</button><button class="pkbtn" v-if="pack.ok" @click="pkOpen=true" aria-label="离线语音包"><svg v-if="!pack.total || (pack.done<pack.total && !pack.run)" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><b v-else-if="pack.run">{{ Math.floor(pack.done / pack.total * 100) }}%</b><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="pkbtn lgbtn" v-if="loginOn" @click="openLogin" :aria-label="authUser ? '账号' : '登录'"><img v-if="authUser && authUser.picture" :src="authUser.picture" alt="" referrerpolicy="no-referrer"><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button></div>
     <p class="mot">I can do all things.</p>
       <div class="hs"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input v-model="sq" type="text" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false" @keydown.enter="sugs.length && pickS(sugs[0].w)" @keydown.esc="sq = ''"><button v-if="sq" class="hx" @click="sq = ''" aria-label="清除">×</button>
         <div class="hsl" v-if="sugs.length"><button v-for="s in sugs" :key="s.w" @click="pickS(s.w)"><b>{{ s.w }}</b><i v-if="s.pos">{{ s.pos }}</i><span>{{ s.zh }}</span></button></div></div></div>
@@ -486,6 +486,19 @@ header{padding-top:23px;padding-bottom:15px}
     <button class="card tile" @click="go('gram')"><div class="ico i5"><svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h22l8 8v24H10z"/><path d="M32 8v8h8M17 24h14M17 31h14"/></g></svg></div><h2>语法与时态</h2><p>{{ GR.length }} 个知识点</p></button>
     <button class="card tile" @click="go('tips')"><div class="ico i6"><svg viewBox="0 0 48 48" width="30" height="30"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6a12 12 0 0 0-7 21.8V33h14v-5.2A12 12 0 0 0 24 6z"/><path d="M18 40h12M20 44h8"/></g></svg></div><h2>考试技巧</h2><p>听说读写 · 备考指南</p></button>
     </div>
+    <div class="pkmask" v-if="loginOn && loginOpen" @click.self="loginOpen=false"><div class="card pk">
+      <div class="pkh"><b>登录</b><small>{{ authUser ? '已登录' : '未登录' }}</small></div>
+      <template v-if="authUser">
+        <div class="lguser"><img v-if="authUser.picture" :src="authUser.picture" alt="" referrerpolicy="no-referrer"><div><b>{{ authUser.name }}</b><small>{{ authUser.email }}</small></div></div>
+        <p class="pkt">{{ verifyMsg }}</p>
+        <div class="pka"><button class="ghost" @click="doLogout">退出登录</button></div>
+      </template>
+      <template v-else>
+        <p class="pkt">用 Google 账号登录后，收藏的单词会保存在你的账号里。</p>
+        <div id="gbtn" class="lgbox"></div>
+        <small class="pkm" v-if="loginMsg">{{ loginMsg }}</small>
+      </template>
+    </div></div>
     <div class="pkmask" v-if="pack.ok && pkOpen" @click.self="pkOpen=false"><div class="card pk">
       <div class="pkh"><b>离线语音包</b><small>{{ pack.done }} / {{ pack.total }}</small></div>
       <p class="pkt">下载到本机后，英音发音直接从本机取，不用联网，出声更快；没下载的发音会用系统语音。约 {{ Math.round(pack.total * 12 / 1024) }} MB，建议连 Wi-Fi，下载时请保持页面打开。</p>
@@ -1139,6 +1152,70 @@ createApp({
     const T = (s) => lang.value === "uk" ? s : PAIRS.reduce((t, p) => t.split(p[0]).join(p[1]), s);
     const pick = (L) => { const sc = v => (/natural|neural|premium|enhanced|online/i.test(v.name) ? 4 : 0) + (/google|samantha|daniel|serena|libby|sonia|aria|jenny|ava|allison|kate|oliver/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1); return speechSynthesis.getVoices().filter(v => v.lang.replace("_", "-") === L).sort((a, b) => sc(b) - sc(a))[0]; };
     const playing = ref("");
+    /* ===== 登录（B 步）：Google 登录的前端部分 ===== */
+    // 公开的 Client ID（不是密码，可以写在前端），告诉 Google「是哪个网站在请求登录」
+    const GOOGLE_CLIENT_ID = "575466444996-0fbl5i1mdfp7b4rmv80kiec6j954d46c.apps.googleusercontent.com";
+    // 后端地址：本机预览时连你电脑上的 Spring Boot（8080 端口）；线上后端还没部署，先留空
+    const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname) ? "http://localhost:8080" : "";
+    // 开关：true = 显示登录入口。想临时隐藏，把它改成 false 即可
+    const loginOn = true;
+    const loginOpen = ref(false);   // 登录弹窗开没开
+    const authUser = ref(null);     // 登录后的用户信息 { name, email, picture }，没登录是 null
+    const loginMsg = ref("");       // 出错时给用户看的提示
+    const verifyMsg = ref("");      // 后端验证的进度/结果，显示在弹窗里
+    let idToken = "";               // Google 发来的「证明书」；下一步（C）会把它发给后端验证
+    let gsiReady = false;           // Google 的脚本是否已经初始化过
+    // 证明书（JWT）是三段用 . 连起来的，中间一段是用户信息（base64url 编码的 JSON），这里只是读出来显示
+    const decodeJwt = (t) => {
+      const b = t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const bin = atob(b + "=".repeat((4 - b.length % 4) % 4));
+      return JSON.parse(decodeURIComponent(Array.from(bin, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
+    };
+    // 用户在 Google 弹窗里确认后，Google 会调用这个函数，resp.credential 就是证明书
+    const onGoogle = async (resp) => {
+      try {
+        idToken = resp.credential;
+        const p = decodeJwt(idToken);
+        authUser.value = { name: p.name || p.email, email: p.email, picture: p.picture || "" };
+        loginMsg.value = "";
+      } catch (e) { loginMsg.value = "登录信息读取失败，请重试"; return; }
+      // 把证明书发给后端：后端会向 Google 的公钥核对签名，确认是真的，再找到或新建这个用户
+      if (!API_BASE) { verifyMsg.value = "后端还没上线，目前只能在本机（localhost）测试后端验证。"; return; }
+      verifyMsg.value = "正在请求后端验证…";
+      try {
+        const r = await fetch(API_BASE + "/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken })
+        });
+        if (!r.ok) { verifyMsg.value = "后端验证没有通过（状态码 " + r.status + "）。"; return; }
+        const u = await r.json();
+        authUser.value = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
+        verifyMsg.value = "后端验证通过。你在我们系统里的用户编号是 #" + u.id + "（自己的 token 下一步再做，刷新页面仍会退出）。";
+      } catch (e) {
+        verifyMsg.value = "连不上后端：请确认 Spring Boot 正在运行（localhost:8080），并且已配置 CORS。";
+      }
+    };
+    // 需要时才加载 Google 的脚本，不影响页面平时的打开速度和离线使用
+    const loadGsi = () => new Promise((ok, no) => {
+      if (window.google && google.accounts && google.accounts.id) return ok();
+      const el = document.createElement("script");
+      el.src = "https://accounts.google.com/gsi/client"; el.async = true;
+      el.onload = ok; el.onerror = no; document.head.appendChild(el);
+    });
+    const openLogin = async () => {
+      loginOpen.value = true; loginMsg.value = "";
+      if (authUser.value) return;
+      try { await loadGsi(); } catch (e) { loginMsg.value = "连不上 Google，请检查网络后再试"; return; }
+      if (!gsiReady) { google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogle }); gsiReady = true; }
+      await Vue.nextTick();   // 等弹窗里的 #gbtn 画出来，再让 Google 把按钮放进去
+      const box = document.getElementById("gbtn");
+      if (box) google.accounts.id.renderButton(box, { theme: "outline", size: "large", text: "signin_with", width: 280 });
+    };
+    const doLogout = () => {
+      if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+      authUser.value = null; idToken = ""; verifyMsg.value = ""; loginOpen.value = false;
+    };
     const mk = (s) => { const u = new SpeechSynthesisUtterance(s); const k = playing.value; u.onerror = u.onend = () => { if (playing.value === k) playing.value = ""; }; return u; };
     const sayText = (t, ev) => { ev.stopPropagation(); if (!window.speechSynthesis) return; if (playing.value === t) { speechSynthesis.cancel(); playing.value = ""; return; } looping.value = ""; speechSynthesis.cancel(); playing.value = t; const u = mk(T(t.replace(/\*\*/g, ""))); u.lang = lang.value === "uk" ? "en-GB" : "en-US"; const v = pick(u.lang); if (v) u.voice = v; u.rate = 0.92; speechSynthesis.speak(u); };
     if (window.speechSynthesis) {
@@ -1547,7 +1624,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 243, t: "10-27 21:19" };
+    const VER = { n: 246, t: "10-28 08:44" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -1648,7 +1725,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
