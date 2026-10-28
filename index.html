@@ -36,6 +36,7 @@ main{max-width:720px;margin:0 auto;padding:8px 20px 48px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pm,:root:not([data-theme="light"]) .pchip{background:#3d1e10;color:#ff9a6b}}
 .trbtn{margin:12px 0 0}.tr{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line);color:var(--sub);font-size:15px}
 .kw h3{margin:0 0 10px;font-size:17px}.kw h3 small{font-weight:400;color:var(--sub);font-size:12px;margin-left:6px}
+.expbar{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}.expbar .dbtn{margin:0;padding:6px 14px;font-size:14px}.expbar .dbtn:disabled{opacity:.5;cursor:default}.expbar small{color:var(--sub,#8e8e93);font-size:13px}
 .anav{display:flex;justify-content:space-between;margin:4px 0 12px}.anav .dbtn{margin:0;padding:6px 14px;font-size:14px}.anav .dbtn:disabled{opacity:.4;cursor:default}
 .lkh{margin:18px 4px 8px;font-size:17px}.lkh small{color:var(--sub);font-weight:400;font-size:12px;margin-left:6px}
 .lk .note{margin:6px 0 0}
@@ -719,6 +720,7 @@ header{padding-top:23px;padding-bottom:15px}
   <div class="artview" v-if="artLoaded" v-show="view === 'art'">
     <h1>{{ ART[artIdx][0] }}</h1>
     <p class="lead"><span class="lvb" :class="'l' + Math.ceil(ART[artIdx][3] / 2)">{{ ART[artIdx][3] >= 10 ? '高阶' : 'Level ' + ART[artIdx][3] }}</span> {{ bandOf(ART[artIdx][3]) }} · {{ ACATS[ART[artIdx][5]][0] }}</p>
+    <div class="expbar"><button class="dbtn" :disabled="expBusy" @click="exportVideo">导出视频（语音＋字幕）</button><small v-if="expMsg">{{ expMsg }}</small></div>
     <div class="card"><article style="position:relative" @mouseleave="hideTip"><p v-html="wrap(stHtml)" @dblclick="artDbl($event)" @click="artClick($event)" @pointerdown="artDown($event)" @pointermove="artMove" @pointerup="lpCancel" @pointerleave="lpCancel" @pointercancel="lpCancel" @contextmenu.prevent></p><p class="tr" v-if="!artBlocks" v-html="ART[artIdx][4].replace(/¶/g, '<br><br>')"></p></article>
     </div>
 
@@ -1189,9 +1191,11 @@ createApp({
           body: JSON.stringify({ idToken })
         });
         if (!r.ok) { verifyMsg.value = "后端验证没有通过（状态码 " + r.status + "）。"; return; }
-        const u = await r.json();
+        const d = await r.json();           // 后端返回 { token: "我们自己发的通行证", user: {...} }
+        const u = d.user;
         authUser.value = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
-        verifyMsg.value = "后端验证通过。你在我们系统里的用户编号是 #" + u.id + "（自己的 token 下一步再做，刷新页面仍会退出）。";
+        saveToken(d.token);                 // 存进 localStorage：刷新页面后还能用它恢复登录
+        verifyMsg.value = "后端验证通过，用户编号 #" + u.id + "。已拿到我们自己的 token 并保存，刷新页面会自动恢复登录。";
       } catch (e) {
         verifyMsg.value = "连不上后端：请确认 Spring Boot 正在运行（localhost:8080），并且已配置 CORS。";
       }
@@ -1215,7 +1219,30 @@ createApp({
     const doLogout = () => {
       if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
       authUser.value = null; idToken = ""; verifyMsg.value = ""; loginOpen.value = false;
+      clearToken();   // token 也一起删掉
     };
+    /* ===== C3：我们自己的 token 存在 localStorage，刷新页面后靠它恢复登录 ===== */
+    // localStorage 在隐私模式等情况下可能报错，所以每次读写都包一层 try/catch
+    const TOKEN_KEY = "ielts_token";
+    const saveToken = (t) => { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} };
+    const loadToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } };
+    const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} };
+    // 页面启动时：如果存着 token，就带着它去问后端「我是谁」
+    const restoreLogin = async () => {
+      const t = loadToken();
+      if (!t || !API_BASE) return;
+      try {
+        const r = await fetch(API_BASE + "/me", { headers: { Authorization: "Bearer " + t } });   // 请求头格式：Authorization: Bearer xxxx
+        if (r.ok) {
+          const u = await r.json();
+          authUser.value = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
+          verifyMsg.value = "已用保存的 token 自动恢复登录，用户编号 #" + u.id + "。";
+        } else if (r.status === 401) {
+          clearToken();   // token 过期或无效：删掉，让用户重新登录
+        }
+      } catch (e) { /* 后端没开：保持未登录，但不删 token，等后端开了再恢复 */ }
+    };
+    restoreLogin();
     const mk = (s) => { const u = new SpeechSynthesisUtterance(s); const k = playing.value; u.onerror = u.onend = () => { if (playing.value === k) playing.value = ""; }; return u; };
     const sayText = (t, ev) => { ev.stopPropagation(); if (!window.speechSynthesis) return; if (playing.value === t) { speechSynthesis.cancel(); playing.value = ""; return; } looping.value = ""; speechSynthesis.cancel(); playing.value = t; const u = mk(T(t.replace(/\*\*/g, ""))); u.lang = lang.value === "uk" ? "en-GB" : "en-US"; const v = pick(u.lang); if (v) u.voice = v; u.rate = 0.92; speechSynthesis.speak(u); };
     if (window.speechSynthesis) {
@@ -1468,6 +1495,113 @@ createApp({
     const pickS = (w) => { sq.value = ""; openDetail(w); };
     const artPairs = computed(() => { const a = ART[artIdx.value]; const e = (a[2].replace(/\*\*|\+\+/g, "").replace(/¶/g, " ").match(/[^.!?]+(?:[.!?]+["”’']*|$)/g) || []).map(x => x.trim()).filter(Boolean); const z = (a[4].replace(/¶/g, "").match(/[^。！？]+(?:[。！？]+[”’」』）)]*|$)/g) || []).map(x => x.trim()).filter(Boolean); if (e.length === z.length) return e.map((x, i) => [x, z[i]]); return [["", a[4].replace(/¶/g, " ")]]; });
     const openCat = (ci) => { topicCat.value = ci; view.value = "cat"; window.scrollTo({ top: 0 }); };
+    /* ===== 导出视频：把本篇文章每句的本机 AI 语音拼成一条音轨，配黑底字幕，在浏览器里直接编码成 mp4 ===== */
+    // 原理：①从 IndexedDB 取出每句的 mp3 → ②解码成「声音采样点」(一长串小数，每秒 44100 个) → ③按时间线拼进一个大数组
+    //       ④用 canvas 画字幕画面 → ⑤VideoEncoder / AudioEncoder 压缩 → ⑥mp4-muxer 把两条流装进 mp4 文件 → ⑦下载
+    const expBusy = ref(false), expMsg = ref("");
+    const expLoadLib = () => new Promise((res, rej) => {
+      if (window.Mp4Muxer) return res();
+      const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.js";
+      s.onload = () => window.Mp4Muxer ? res() : rej(new Error("lib")); s.onerror = () => rej(new Error("lib")); document.head.appendChild(s);
+    });
+    // 画字幕用：按宽度折行（英文按单词，中文按字）
+    const expWrap = (ctx, text, maxW) => {
+      const tk = text.match(/[　-〿一-鿿＀-￯]|[^\s　-〿一-鿿＀-￯]+\s*|\s+/g) || [];
+      const lines = []; let cur = "";
+      for (const w of tk) { if (cur && ctx.measureText((cur + w).trimEnd()).width > maxW) { lines.push(cur.trimEnd()); cur = w.trimStart(); } else cur += w; }
+      if (cur.trim()) lines.push(cur.trimEnd());
+      return lines;
+    };
+    const exportVideo = async () => {
+      if (expBusy.value) return;
+      if (!window.VideoEncoder || !window.AudioEncoder) { expMsg.value = "当前浏览器不支持导出（需要较新的 Chrome、Edge 或 Safari）。"; return; }
+      const a = ART[artIdx.value], title = a[0];
+      // ① 把文章拆成句子：英文来自原文，中文来自已对齐的译文（对不上就只放英文）
+      const zhs = artBlocks.value ? artBlocks.value.map(b => b.zh) : [];
+      const sents = []; let n = 0;
+      a[2].split("¶").forEach((para) => { (para.replace(/\*\*|\+\+/g, "").match(/[^.!?]+(?:[.!?]+["”’']*|$)/g) || []).map(x => x.trim()).filter(Boolean).forEach((s, si, arr) => { sents.push({ en: s, zh: zhs.length ? zhs[n] || "" : "", endPara: si === arr.length - 1 }); n++; }); });
+      if (!sents.length) return;
+      expBusy.value = true; expMsg.value = "正在读取本机语音…";
+      try {
+        await expLoadLib();
+        const SR = 44100, AUDB_ = window.__AUDB || "https://audio.goenkon.com/";
+        const dec = new OfflineAudioContext(1, 1, SR);
+        // ② 逐句取语音并解码；没有本机语音的句子留一段静音（浏览器自带朗读无法录进文件）
+        let miss = 0;
+        for (let i = 0; i < sents.length; i++) {
+          const s = sents[i]; s.pcm = null;
+          try {
+            const id = window.__clipUrl(s.en).slice(AUDB_.length, -4);
+            const ab = window.__idbGet ? await window.__idbGet(id) : null;
+            if (ab) { const buf = await dec.decodeAudioData(ab.slice(0)); s.pcm = buf.getChannelData(0); }   // 取第一声道，单声道足够
+          } catch (e) { s.pcm = null; }
+          if (!s.pcm) { miss++; s.pcm = new Float32Array(Math.round(SR * Math.max(1.5, s.en.split(/\s+/).length * 0.4))); }
+          expMsg.value = "读取语音 " + (i + 1) + "/" + sents.length;
+          if (i % 8 === 7) await new Promise(r => setTimeout(r, 0));
+        }
+        if (miss && !confirm("有 " + miss + " 句没有本机 AI 语音（语音包没下载全），这些句子在视频里只有字幕、没有声音。继续导出吗？")) { expMsg.value = ""; expBusy.value = false; return; }
+        // ③ 排时间线：每句后停 0.6 秒，段落结束停 1.4 秒；片头 1 秒、片尾 1 秒
+        let t = 1.0; const lead = 1.0;
+        sents.forEach(s => { s.t0 = t; s.dur = s.pcm.length / SR; t += s.dur + (s.endPara ? 1.4 : 0.6); });
+        const total = t + 0.4;
+        const mix = new Float32Array(Math.ceil(total * SR));
+        sents.forEach(s => { mix.set(s.pcm, Math.round(s.t0 * SR)); });   // 把每句的采样点放到它的起始位置
+        // ④ 选编码：优先 H.264 + AAC（所有播放器通用），不支持就退到 VP9 + Opus
+        const W = 1280, H = 720, FPS = 10;
+        let vc = null, ac_ = null;
+        for (const c of [["avc1.4d0020", "avc"], ["avc1.42001f", "avc"], ["vp09.00.10.08", "vp9"]]) { try { if ((await VideoEncoder.isConfigSupported({ codec: c[0], width: W, height: H, bitrate: 600000, framerate: FPS })).supported) { vc = c; break; } } catch (e) {} }
+        for (const c of [["mp4a.40.2", "aac"], ["opus", "opus"]]) { try { if ((await AudioEncoder.isConfigSupported({ codec: c[0], sampleRate: SR, numberOfChannels: 1, bitrate: 96000 })).supported) { ac_ = c; break; } } catch (e) {} }
+        if (!vc || !ac_) throw new Error("codec");
+        const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: vc[1], width: W, height: H, frameRate: FPS }, audio: { codec: ac_[1], numberOfChannels: 1, sampleRate: SR }, fastStart: "in-memory" });
+        let encErr = null;
+        const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { encErr = e; } });
+        ve.configure({ codec: vc[0], width: W, height: H, bitrate: 600000, framerate: FPS });
+        const ae = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => { encErr = e; } });
+        ae.configure({ codec: ac_[0], sampleRate: SR, numberOfChannels: 1, bitrate: 96000 });
+        // ⑤ 音轨：每次交给编码器 1 秒
+        for (let o = 0; o < mix.length; o += SR) {
+          const part = mix.subarray(o, Math.min(o + SR, mix.length));
+          const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: part.length, numberOfChannels: 1, timestamp: Math.round(o / SR * 1e6), data: part });
+          ae.encode(ad); ad.close();
+          if (encErr) throw encErr;
+        }
+        // ⑥ 画面：黑底；标题在上，当前句英文（白）+ 中文（灰）居中
+        const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+        const FF = '-apple-system,"PingFang SC","Hiragino Sans","Microsoft YaHei",sans-serif';
+        const nFrames = Math.ceil(total * FPS);
+        let si = -1;
+        for (let f = 0; f < nFrames; f++) {
+          const ts = f / FPS;
+          while (si + 1 < sents.length && sents[si + 1].t0 <= ts) si++;   // 当前该显示第几句（片头时 si=-1）
+          const cur = si >= 0 && ts < sents[si].t0 + sents[si].dur + 0.5 ? sents[si] : null;
+          g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+          g.textAlign = "center"; g.textBaseline = "alphabetic";
+          g.fillStyle = "#6e6e73"; g.font = "600 26px " + FF; g.fillText(title, W / 2, 70);
+          if (cur) {
+            g.font = "600 46px " + FF; const el = expWrap(g, cur.en, W - 200);
+            g.font = "400 32px " + FF; const zl = expWrap(g, cur.zh, W - 240);
+            const hh = el.length * 62 + (zl.length ? 20 + zl.length * 46 : 0); let y = (H - hh) / 2 + 46;
+            g.fillStyle = "#fff"; g.font = "600 46px " + FF; el.forEach(l => { g.fillText(l, W / 2, y); y += 62; });
+            y += zl.length ? 10 : 0;
+            g.fillStyle = "#a1a1a6"; g.font = "400 32px " + FF; zl.forEach(l => { g.fillText(l, W / 2, y); y += 46; });
+          }
+          g.fillStyle = "#2c2c2e"; g.fillRect(0, H - 6, W, 6); g.fillStyle = "#0a84ff"; g.fillRect(0, H - 6, W * ts / total, 6);   // 底部进度条
+          const vf = new VideoFrame(cv, { timestamp: Math.round(ts * 1e6), duration: Math.round(1e6 / FPS) });
+          ve.encode(vf, { keyFrame: f % (FPS * 5) === 0 }); vf.close();
+          if (encErr) throw encErr;
+          if (f % 20 === 19) { expMsg.value = "生成视频 " + Math.round(f / nFrames * 100) + "%"; await new Promise(r => setTimeout(r, 0)); while (ve.encodeQueueSize > 30) await new Promise(r => setTimeout(r, 10)); }
+        }
+        expMsg.value = "正在封装 mp4…";
+        await ve.flush(); await ae.flush(); ve.close(); ae.close(); muxer.finalize();
+        const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
+        const aEl = document.createElement("a"); aEl.href = URL.createObjectURL(blob); aEl.download = title.replace(/[\\/:*?"<>|]/g, " ").trim() + ".mp4"; document.body.appendChild(aEl); aEl.click(); aEl.remove();
+        setTimeout(() => URL.revokeObjectURL(aEl.href), 60000);
+        expMsg.value = "已导出 " + (blob.size / 1048576).toFixed(1) + " MB" + (miss ? "（" + miss + " 句无语音）" : "");
+      } catch (e) {
+        expMsg.value = e && e.message === "lib" ? "导出组件加载失败，请联网后重试。" : e && e.message === "codec" ? "这个浏览器没有可用的视频编码器。" : "导出失败：" + (e && e.message || e);
+      }
+      expBusy.value = false;
+    };
     const openArt = (i) => { artIdx.value = i; topicCat.value = ART[i][5]; view.value = "art"; };
     const catArts = computed(() => ART.map((item, idx) => ({ item, idx })).filter(x => x.item[5] === topicCat.value).sort((a, b) => a.item[3] - b.item[3]));
     const prevArt = computed(() => { const L = catArts.value, k = L.findIndex(x => x.idx === artIdx.value); return k > 0 ? L[k - 1] : null; });
@@ -1624,7 +1758,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 246, t: "10-28 08:44" };
+    const VER = { n: 248, t: "10-28 19:22" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -1725,7 +1859,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { expBusy, expMsg, exportVideo, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
