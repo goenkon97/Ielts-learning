@@ -117,7 +117,7 @@ input[type=search]{width:100%;border:0;background:var(--line);color:var(--text);
 @media (hover:hover){.dbtn:hover{filter:brightness(.95)}}
 .dall{cursor:default;padding:6px 20px}
 .dall section{padding:16px 0;border-top:1px solid var(--line)}
-.dall section:first-child{border-top:0}
+.dall section:first-of-type{border-top:0}
 .dall h3{margin:0 0 10px;font-size:17px}
 .dbar{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + var(--hh,54px) + 6px);z-index:30;display:flex;align-items:center;gap:2px;max-width:min(680px,calc(100vw - 24px));overflow-x:auto;scrollbar-width:none;padding:5px 10px;border-radius:999px;background:color-mix(in srgb,var(--card) 62%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 4px 18px rgba(0,0,0,.16);border:1px solid var(--line)}
 .dbar::-webkit-scrollbar{display:none}
@@ -465,6 +465,25 @@ header{padding-top:23px;padding-bottom:15px}
 :root:not([data-theme="light"]) .pager button,:root:not([data-theme="light"]) .pager select{background-image:var(--grain-c)!important}}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) main .card h3{color:#f3ead7}}
 /*end grain-more*/
+
+#favbtn{border:0;background:none;color:var(--text);cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center}#favbtn:hover{background:var(--line)}
+.favstar{position:absolute;top:14px;right:14px;z-index:1;border:0;background:none;color:var(--sub);cursor:pointer;padding:4px;border-radius:8px;display:flex;align-items:center;justify-content:center}.favstar svg{fill:none;transition:fill .15s}.favstar.on{color:var(--blue)}.favstar.on svg{fill:currentColor}.favstar:hover{background:var(--line)}
+.dall .dtitle{padding-right:44px}.pdw{font-size:28px;line-height:1.25}
+.fvseg{margin:6px 0 14px}.fvseg button{flex:1;text-align:center}.fvseg em{font-style:normal;opacity:.6;font-size:12px;margin-left:2px}
+.fvl{padding:2px 20px}
+.fvr{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;padding:14px 0;cursor:pointer}.fvr:first-child{border-top:0}
+.fvm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.fvt{display:flex;align-items:baseline;gap:8px;min-width:0}.fvt b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fk{flex:none;font-style:normal;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--line);color:var(--sub)}.fk.p{background:var(--chip);color:var(--blue)}
+.fvz{color:var(--sub);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fvc{flex:none;color:var(--sub);font-size:22px;line-height:1}
+.fvempty{text-align:center;padding:40px 0}.fvdemo{text-align:center;margin-top:18px}
+@media (hover:hover){.fvr:hover .fvc{color:var(--blue)}}
+.fvbar{display:flex;align-items:center;gap:10px;margin:6px 0 14px}.fvbar .fvseg{flex:1;margin:0}
+.fveye{flex:none;width:38px;height:38px;border:0;border-radius:11px;background:var(--line);color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}.fveye.on{background:var(--blue);color:#fff}
+.fvz.hid{color:transparent;background:var(--line);border-radius:6px;width:min(9em,60%);height:1.3em;user-select:none;cursor:pointer}
+.stick .fvbar{margin:0}
+main .stick.fvstick{margin-top:-8px}
 </style>
 </head>
 <body>
@@ -472,7 +491,7 @@ header{padding-top:23px;padding-bottom:15px}
 <header>
   <button id="back" :style="{visibility: view==='home' ? 'hidden' : 'visible'}" @click="goBack">‹ 返回</button>
   <b>{{ title }}<small class="ver" v-if="view==='home'">v{{ VER.n }} · {{ VER.t }}</small></b>
-  <div class="hr"><button id="homebtn" type="button" v-if="view !== 'home'" @click="goHome" aria-label="回到首页" title="回到首页"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button></div>
+  <div class="hr"><button id="favbtn" type="button" v-if="view !== 'fav'" @click="go('fav')" aria-label="收藏本" title="收藏本"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z"/><path d="M12 6.5v13"/></svg></button><button id="homebtn" type="button" v-if="view !== 'home'" @click="goHome" aria-label="回到首页" title="回到首页"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button></div>
 </header>
 <main>
   <template v-if="view==='home'">
@@ -527,6 +546,7 @@ header{padding-top:23px;padding-bottom:15px}
   <template v-else-if="view==='detail' && dt">
     <div class="dbar"><span class="lv">第 {{ dstack.length }} 层</span><template v-for="(w, i) in dstack" :key="i"><span class="ar" v-if="i">›</span><button :class="{on: i === dstack.length - 1}" @click="jumpTo(i)">{{ T(w) }}</button></template></div>
     <div class="card dall">
+      <button class="favstar" type="button" :class="{on: isFav('w', dt.w)}" @click="toggleFav('w', dt.w)" :aria-label="isFav('w', dt.w) ? '取消收藏' : '收藏'" :title="isFav('w', dt.w) ? '取消收藏' : '收藏'"><svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V21l-6.5-4.4L5.5 21V4.5a1 1 0 0 1 1-1z"/></svg></button>
       <section>
         <div class="dtitle"><h1 class="dw">{{ T(dt.w) }}</h1><span class="dprs"><span class="dpr" v-if="dt.ipaUk"><span class="acc">英</span><button class="ph" @click="speakAcc(dt.w, 'uk')">/{{ dt.ipaUk }}/</button></span><span class="dpr" v-if="dt.ipaUs"><span class="acc">美</span><button class="ph" @click="speakAcc(dt.w, 'us')">/{{ dt.ipaUs }}/</button></span></span></div>
         <div class="badges" v-if="dt.info">
@@ -586,6 +606,41 @@ header{padding-top:23px;padding-bottom:15px}
         <p class="note" v-else>没有匹配到常见的前缀、后缀或词根，可能是一个独立的词根词。</p>
       </section>
       <section><h3>总结</h3><p class="sm">{{ dt.sm }}</p></section>
+    </div>
+  </template>
+
+  <template v-else-if="view==='fav'">
+    <div class="stick fvstick"><div class="fvbar"><div class="seg fvseg"><button v-for="t in [['all','全部'],['w','单词'],['p','短语']]" :key="t[0]" :class="{on: favTab === t[0]}" @click="favTab = t[0]">{{ t[1] }} <em>{{ favN[t[0]] }}</em></button></div><button class="fveye" type="button" :class="{on: favHide}" @click="toggleHide" :aria-label="favHide ? '显示释义' : '隐藏释义'" :title="favHide ? '显示释义' : '隐藏释义，先在脑子里回想'"><template v-if="favHide"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.2A10.6 10.6 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.5 7.6A16.6 16.6 0 0 0 2 12s3.6 6.5 10 6.5c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></template><template v-else><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></template></button></div></div>
+    <div class="card fvl" v-if="favList.length">
+      <button class="fvr" type="button" v-for="f in favList" :key="f.k + f.key" @click="openFav(f)">
+        <span class="fvm"><span class="fvt"><b>{{ T(f.key) }}</b><i class="fk" :class="f.k">{{ f.k === 'w' ? '单词' : '短语' }}</i></span><span class="fvz" :class="{hid: favHide && !favPeek[f.k + f.key]}" @click="favHide && !favPeek[f.k + f.key] && ($event.stopPropagation(), favPeek[f.k + f.key] = true)">{{ favMeaning(f) }}</span></span>
+        <span class="fvc">›</span>
+      </button>
+    </div>
+    <p class="note fvempty" v-else>这里还没有收藏。打开单词或短语的详情页，点右上角的书签就能收藏。</p>
+    <p class="note fvdemo">目前是演示数据，刷新页面会恢复。接上账号之后，收藏会保存到你的账号里。</p>
+  </template>
+
+  <template v-else-if="view==='pdet' && pcur">
+    <div class="card dall">
+      <button class="favstar" type="button" :class="{on: isFav('p', pcur[2])}" @click="toggleFav('p', pcur[2])" :aria-label="isFav('p', pcur[2]) ? '取消收藏' : '收藏'" :title="isFav('p', pcur[2]) ? '取消收藏' : '收藏'"><svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V21l-6.5-4.4L5.5 21V4.5a1 1 0 0 1 1-1z"/></svg></button>
+      <section>
+        <div class="dtitle"><h1 class="dw pdw">{{ T(pcur[2]) }}</h1></div>
+        <div class="badges"><span class="bd blue">短语</span><span class="bd">{{ pcur[0] }}</span><span class="bd">{{ pcur[4] === 'W' ? '书面' : pcur[4] === 'S' ? '口语' : '通用' }}</span></div>
+      </section>
+      <section>
+        <h3>释义</h3>
+        <div class="sn">{{ pcur[3] }}</div>
+        <p class="note" v-if="pcur[1]">{{ pcur[1] }}</p>
+        <p class="note" v-if="pcur[5]">用法：{{ pcur[5] }}</p>
+      </section>
+      <section v-if="pcur[6]">
+        <h3>例句 <small>点例句里的单词可以看意思</small></h3>
+        <div class="dex" @mouseleave="hideTip">
+          <p v-html="wrap(sHtml(pcur[6]))" @dblclick.stop="showTip($event, 'lk')" @click.stop="clickSay($event)"></p><small>{{ pcur[7] }}</small>
+          <button class="play" :class="{on: playing === pcur[6]}" @click="sayText(pcur[6], $event)" :title="playing === pcur[6] ? '停止' : '朗读例句'"><span class="eq" v-if="playing === pcur[6]"><i></i><i></i><i></i></span><template v-else>▶</template></button>
+        </div>
+      </section>
     </div>
   </template>
 
@@ -1460,7 +1515,7 @@ createApp({
     const listAll = computed(() => SYN.filter((r, ri) => (cat.value === "全部" || (cat.value === "重点" ? KS.has(ri) : (CAT[r[0]] || "通用") === cat.value)) && (!q.value || (r[0] + r[1] + r[2]).toLowerCase().includes(q.value.toLowerCase()))));
     const list = computed(() => listAll.value.slice(pgs.value.syn * 10, pgs.value.syn * 10 + 10));
     const artProg = computed(() => { const n = ACATS.map(() => 0); ART.forEach(a => { if (a[3] >= 10) n[a[5]]++; }); return { done: n.filter(x => x >= 8).length }; });
-    const title = computed(() => view.value === "home" ? "IELTS" : view.value === "syn" ? "同义词替换" : view.value === "topics" ? "文章" : view.value === "cat" ? ACATS[topicCat.value][0] : view.value === "detail" ? "单词详情" : view.value === "link" ? "连接词" : view.value === "phr" ? "短语" : view.value === "tips" ? "考试技巧" : view.value === "tdet" && tcur.value ? tcur.value.t : view.value === "gram" ? "语法与时态" : view.value === "gdet" && gcur.value ? gcur.value.t : ART[artIdx.value][0]);
+    const title = computed(() => view.value === "home" ? "IELTS" : view.value === "syn" ? "同义词替换" : view.value === "topics" ? "文章" : view.value === "cat" ? ACATS[topicCat.value][0] : view.value === "fav" ? "收藏本" : view.value === "pdet" ? "短语详情" : view.value === "detail" ? "单词详情" : view.value === "link" ? "连接词" : view.value === "phr" ? "短语" : view.value === "tips" ? "考试技巧" : view.value === "tdet" && tcur.value ? tcur.value.t : view.value === "gram" ? "语法与时态" : view.value === "gdet" && gcur.value ? gcur.value.t : ART[artIdx.value][0]);
     const artBlocks = computed(() => { const a = ART[artIdx.value]; const z = (a[4].replace(/¶/g, "").match(/[^。！？]+(?:[。！？]+[”’」』）)]*|$)/g) || []).map(x => x.trim()).filter(Boolean); const out = []; a[2].split("¶").forEach((para, pi) => { (para.match(/[^.!?]+(?:[.!?]+["”’']*|$)/g) || []).map(x => x.trim()).filter(Boolean).forEach((s, si) => out.push({ h: T(autoMark(s)).replace(/\*\*(.+?)\*\*/g, "<mark>$1</mark>").replace(/\+\+(.+?)\+\+/g, '<mark class="pm">$1</mark>'), np: si === 0 && pi > 0 })); }); if (out.length !== z.length) return null; out.forEach((b, i) => b.zh = z[i]); return out; });
     const trHtml = computed(() => artBlocks.value.map((b, i) => (i ? (b.np ? "<br><br>" : " ") : "") + '<span class="sg">' + b.h + '<span class="zl">' + b.zh + "</span></span>").join(""));
     const stHtml = computed(() => artBlocks.value ? artBlocks.value.map((b, i) => (i ? (b.np ? "<br><br>" : " ") : "") + '<span class="st" data-i="' + i + '">' + b.h + "</span>").join("") : articleHtml.value);
@@ -1679,7 +1734,20 @@ createApp({
     const artKeysDom = ref(null); const artKeys = computed(() => artKeysDom.value || artAuto.value.words);
     watch([view, artIdx, stHtml], () => { artKeysDom.value = null; Vue.nextTick(() => { if (view.value !== "art") return; const seen = new Set(), out = []; document.querySelectorAll("article .st").forEach(st => sentKw(st).forEach(x => { if (seen.has(x[3])) return; seen.add(x[3]); out.push({ w: x[3], pos: x[1], zh: x[2] }); })); if (out.length) artKeysDom.value = out; }); }, { flush: "post" });
     const artPh = computed(() => artAuto.value.phr);
-    const back = () => { if (view.value === "tdet") { view.value = "tips"; return; } if (view.value === "gdet") { view.value = "gram"; return; } if (view.value === "gram" && gpart.value) { gpart.value = ""; return; } if (view.value === "art") { view.value = "cat"; return; } if (view.value === "cat") { view.value = "topics"; return; } if (view.value === "detail") { if (dstack.value.length > 1) { jumpTo(dstack.value.length - 2); return; } const o = origin || { view: "home", y: 0 }; view.value = o.view; dstack.value = []; setTimeout(() => window.scrollTo({ top: o.y }), 30); return; } view.value = view.value === "art" ? "topics" : "home"; };
+    // ===== 收藏本（演示数据：先看界面，之后换成后端的真实收藏）=====
+    // k: "w" 单词 / "p" 短语；key: 单词本身或短语原文。数组前面的是最新收藏的
+    const favs = ref([{ k: "w", key: "accommodation" }, { k: "p", key: "on the other hand" }, { k: "w", key: "mitigate" }, { k: "p", key: "as a result" }, { k: "w", key: "sustainable" }, { k: "w", key: "deteriorate" }, { k: "p", key: "it is widely believed that" }, { k: "w", key: "scarce" }, { k: "p", key: "in conclusion" }]);
+    const favTab = ref("all");
+    const favHide = ref(false), favPeek = Vue.reactive({});   // favHide：是否隐藏释义；favPeek：隐藏时被单独点开看的那几条
+    const toggleHide = () => { favHide.value = !favHide.value; Object.keys(favPeek).forEach(k => delete favPeek[k]); };
+    const favList = computed(() => favs.value.filter(f => favTab.value === "all" || f.k === favTab.value));
+    const favN = computed(() => ({ all: favs.value.length, w: favs.value.filter(f => f.k === "w").length, p: favs.value.filter(f => f.k === "p").length }));
+    const isFav = (k, key) => favs.value.some(f => f.k === k && f.key === key);
+    const toggleFav = (k, key) => { if (isFav(k, key)) favs.value = favs.value.filter(f => !(f.k === k && f.key === key)); else favs.value = [{ k, key }].concat(favs.value); };
+    const pcur = ref(null);
+    const favMeaning = (f) => { if (f.k === "p") { const r = LK.find(x => x[2] === f.key); return r ? r[3] : ""; } const n = NU[f.key]; if (n) return n[0] + " " + n[1]; const d = DICT[f.key]; return d ? d.split("\n")[0] : ""; };
+    const openFav = (f) => { if (f.k === "w") { openDetail(f.key); return; } const r = LK.find(x => x[2] === f.key); if (r) { pcur.value = r; tip.value = null; view.value = "pdet"; window.scrollTo({ top: 0 }); } };
+    const back = () => { if (view.value === "pdet") { view.value = "fav"; return; } if (view.value === "tdet") { view.value = "tips"; return; } if (view.value === "gdet") { view.value = "gram"; return; } if (view.value === "gram" && gpart.value) { gpart.value = ""; return; } if (view.value === "art") { view.value = "cat"; return; } if (view.value === "cat") { view.value = "topics"; return; } if (view.value === "detail") { if (dstack.value.length > 1) { jumpTo(dstack.value.length - 2); return; } const o = origin || { view: "home", y: 0 }; view.value = o.view; dstack.value = []; setTimeout(() => window.scrollTo({ top: o.y }), 30); return; } view.value = view.value === "art" ? "topics" : "home"; };
     const toggleQuiz = () => { quiz.value = !quiz.value; shown.value = {}; };
     watch([view, artIdx], () => window.scrollTo(0, 0));
     // ===== 单词详情 =====
@@ -1822,7 +1890,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 258, t: "10-29 15:59" };
+    const VER = { n: 262, t: "10-29 21:05" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -1898,15 +1966,16 @@ createApp({
     watch([cat, q, pcat, lcat], () => { pgs.value = { syn: 0, phr: 0, link: 0 }; });
     watch(pgs, () => { tip.value = null; window.scrollTo({ top: 0 }); }, { deep: true });
     // ---- hash router: browser back/forward, deep links
-    const routeHash = computed(() => { const v = view.value; if (v === "home") return ""; if (v === "cat") return "cat/" + topicCat.value; if (v === "art") return "art/" + artIdx.value; if (v === "detail") return "d/" + dstack.value.map(encodeURIComponent).join("/"); if (v === "gram") return "gram" + (gpart.value ? "/" + gpart.value : ""); if (v === "gdet") return "g/" + GR.indexOf(Vue.toRaw(gcur.value)); if (v === "tdet") return "t/" + TP.indexOf(Vue.toRaw(tcur.value)); return v; });
+    const routeHash = computed(() => { const v = view.value; if (v === "home") return ""; if (v === "cat") return "cat/" + topicCat.value; if (v === "art") return "art/" + artIdx.value; if (v === "detail") return "d/" + dstack.value.map(encodeURIComponent).join("/"); if (v === "gram") return "gram" + (gpart.value ? "/" + gpart.value : ""); if (v === "gdet") return "g/" + GR.indexOf(Vue.toRaw(gcur.value)); if (v === "tdet") return "t/" + TP.indexOf(Vue.toRaw(tcur.value)); if (v === "pdet") return "p/" + LK.indexOf(Vue.toRaw(pcur.value)); return v; });
     const applyHash = (hs) => { const parts = String(hs || "").replace(/^#\/?/, "").split("/").filter(x => x !== ""); const a = parts[0] || "home"; tip.value = null; if (a !== "d") dstack.value = [];
-      if (["syn", "topics", "link", "phr", "tips"].includes(a)) view.value = a;
+      if (["syn", "topics", "link", "phr", "tips", "fav"].includes(a)) view.value = a;
       else if (a === "cat" && ACATS[+parts[1]]) { topicCat.value = +parts[1]; view.value = "cat"; }
       else if (a === "art" && ART[+parts[1]]) { artIdx.value = +parts[1]; topicCat.value = ART[+parts[1]][5]; view.value = "art"; }
       else if (a === "d" && parts[1]) { let ws = []; try { ws = parts.slice(1).map(decodeURIComponent); } catch (e) { ws = [parts[1]]; } dstack.value = ws; detailW.value = ws[ws.length - 1]; if (!origin) origin = { view: "home", y: 0 }; view.value = "detail"; }
       else if (a === "gram") { gpart.value = parts[1] || ""; gfq.value = -1; view.value = "gram"; }
       else if (a === "g" && GR[+parts[1]]) { gcur.value = GR[+parts[1]]; gpart.value = gcur.value.p; view.value = "gdet"; }
       else if (a === "t" && TP[+parts[1]]) { tcur.value = TP[+parts[1]]; view.value = "tdet"; }
+      else if (a === "p" && LK[+parts[1]]) { pcur.value = LK[+parts[1]]; view.value = "pdet"; }
       else view.value = "home"; };
     const EP = Math.random().toString(36).slice(2); const histN = () => { const s = history.state; return (s && s.ep === EP && typeof s.n === "number") ? s.n : 0; }; let replaceNext = false, pendingHome = false, homeT = 0;
     const scrollMap = {}; let lastHash = "";
@@ -1923,7 +1992,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
