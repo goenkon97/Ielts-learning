@@ -544,7 +544,7 @@ main .stick.fvstick{margin-top:-8px}
     <div class="card dall">
       <button class="favstar" type="button" v-if="favOn" :class="{on: isFav('w', dt.w)}" @click="toggleFav('w', dt.w)" :aria-label="isFav('w', dt.w) ? '取消收藏' : '收藏'" :title="isFav('w', dt.w) ? '取消收藏' : '收藏'"><svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V21l-6.5-4.4L5.5 21V4.5a1 1 0 0 1 1-1z"/></svg></button>
       <section>
-        <div class="dtitle"><h1 class="dw">{{ T(dt.w) }}</h1><span class="dprs"><span class="dpr" v-if="dt.ipaUk"><span class="acc">英</span><button class="ph" @click="speakAcc(dt.w, 'uk')">/{{ dt.ipaUk }}/</button></span><span class="dpr" v-if="dt.ipaUs"><span class="acc">美</span><button class="ph" @click="speakAcc(dt.w, 'us')">/{{ dt.ipaUs }}/</button></span></span></div>
+        <div class="dtitle"><h1 class="dw spk" @click="speakWord(dt.w)" title="点击发音">{{ T(dt.w) }}</h1><span class="dprs"><span class="dpr" v-if="dt.ipaUk"><span class="acc">英</span><button class="ph" @click="speakAcc(dt.w, 'uk')">/{{ dt.ipaUk }}/</button></span><span class="dpr" v-if="dt.ipaUs"><span class="acc">美</span><button class="ph" @click="speakAcc(dt.w, 'us')">/{{ dt.ipaUs }}/</button></span></span></div>
         <div class="badges" v-if="dt.info">
           <span class="bd blue" v-if="dt.info.ielts">雅思词表</span>
           <span class="bd blue" v-if="dt.band">雅思约 Band {{ dt.band }}</span>
@@ -1970,7 +1970,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 268, t: "10-30 17:10" };
+    const VER = { n: 269, t: "10-30 17:20" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
