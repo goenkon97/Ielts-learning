@@ -1230,7 +1230,9 @@ createApp({
     // 公开的 Client ID（不是密码，可以写在前端），告诉 Google「是哪个网站在请求登录」
     const GOOGLE_CLIENT_ID = "575466444996-0fbl5i1mdfp7b4rmv80kiec6j954d46c.apps.googleusercontent.com";
     // 后端地址：本机预览时连你电脑上的 Spring Boot（8080 端口）；线上后端还没部署，先留空
-    const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname) ? "http://localhost:8080" : "";
+    const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname) ? "http://localhost:8080" : "https://ielts-backend-node.vercel.app";
+    // 页面一打开就悄悄叫醒后端和数据库（免费版会休眠），不等结果、失败也不管
+    if (API_BASE) { try { fetch(API_BASE + "/health").catch(() => {}); } catch (e) {} }
     // 开关：true = 显示登录入口。想临时隐藏，把它改成 false 即可
     const loginOn = true;
     const loginOpen = ref(false);   // 登录弹窗开没开
