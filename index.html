@@ -489,7 +489,7 @@ header{padding-top:23px;padding-bottom:15px}
 .spk{cursor:pointer;-webkit-tap-highlight-color:transparent}.spk:active{opacity:.55}
 .fvseg{margin:6px 0 14px}.fvseg button{flex:1;text-align:center}.fvseg em{font-style:normal;opacity:.6;font-size:12px;margin-left:2px}
 .fvl{padding:2px 20px}
-.fvpager{justify-content:center;padding:12px 0 8px}   /* 收藏分页器居中 */
+.fvpager{justify-content:center;padding:8px 0 0}   /* 收藏分页器居中，放在吸顶栏下面一行 */
 .fvr{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;padding:14px 0;cursor:pointer}.fvr:first-child{border-top:0}
 .fvm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .fvt{display:flex;align-items:baseline;gap:8px;min-width:0}.fvt b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -504,7 +504,10 @@ header{padding-top:23px;padding-bottom:15px}
 .stick .fvbar{margin:0}
 main .stick.fvstick{margin-top:-8px}
 .fvgate{text-align:center;padding:48px 8px;color:var(--sub)}.fvgate p{margin:0 0 16px;font-size:15px;line-height:1.6}.fvgate .dbtn{margin:0;padding:10px 32px;font-size:16px}
-.ftoast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:30;background:var(--text);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:14px;max-width:86vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.ftoast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:30;background:rgba(44,44,48,.55);color:#fff;-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border:1px solid rgba(255,255,255,.18);padding:9px 18px;border-radius:99px;font-size:14px;max-width:86vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+/* 弹窗进出场：半透明 + 从上方轻轻滑下、淡入淡出（Vue 的 transition 会自动加这三组 class） */
+.tst-enter-active,.tst-leave-active{transition:opacity .28s ease,transform .28s ease}
+.tst-enter-from,.tst-leave-to{opacity:0;transform:translate(-50%,-14px)}
 .fvmark{flex:none;border:0;background:none;color:var(--sub);cursor:pointer;padding:3px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.fvmark svg{fill:none;transition:fill .15s}.fvmark.on{color:var(--blue)}.fvmark.on svg{fill:currentColor}.fvmark:hover{background:var(--line)}
 .word>.dbtn,.word>.fvmark{align-self:center}
 .chip .fvmark{margin-left:2px;padding:2px}
@@ -624,7 +627,8 @@ main .stick.fvstick{margin-top:-8px}
   </template>
 
   <template v-else-if="view==='fav'">
-    <div class="stick fvstick" v-if="authUser"><div class="fvbar"><div class="seg fvseg"><button v-for="t in [['all','全部'],['w','单词'],['p','短语']]" :key="t[0]" :class="{on: favTab === t[0]}" @click="favTab = t[0]; favPage = 0">{{ t[1] }} <em>{{ favN[t[0]] }}</em></button></div><button class="fveye" type="button" :class="{on: favHide}" @click="toggleHide" :aria-label="favHide ? '显示释义' : '隐藏释义'" :title="favHide ? '显示释义' : '隐藏释义，先在脑子里回想'"><template v-if="favHide"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.2A10.6 10.6 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.5 7.6A16.6 16.6 0 0 0 2 12s3.6 6.5 10 6.5c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></template><template v-else><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></template></button></div></div>
+    <div class="stick fvstick" v-if="authUser"><div class="fvbar"><div class="seg fvseg"><button v-for="t in [['all','全部'],['w','单词'],['p','短语']]" :key="t[0]" :class="{on: favTab === t[0]}" @click="favTab = t[0]; favPage = 0">{{ t[1] }} <em>{{ favN[t[0]] }}</em></button></div><button class="fveye" type="button" :class="{on: favHide}" @click="toggleHide" :aria-label="favHide ? '显示释义' : '隐藏释义'" :title="favHide ? '显示释义' : '隐藏释义，先在脑子里回想'"><template v-if="favHide"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.2A10.6 10.6 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.5 7.6A16.6 16.6 0 0 0 2 12s3.6 6.5 10 6.5c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></template><template v-else><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></template></button></div><!-- 收藏分页器：放在吸顶栏里，滑动时一直在上面；样式沿用 .pager，超过 10 条才显示 -->
+      <div class="pager fvpager" v-if="authUser && favList.length > FPS"><button :disabled="favPageC === 0" @click="favPage = favPageC - 1" aria-label="上一页">‹</button><select :value="favPageC" @change="favPage = +$event.target.value"><option v-for="n in favPages" :value="n - 1" :key="n">{{ n }} / {{ favPages }}</option></select><button :disabled="favPageC >= favPages - 1" @click="favPage = favPageC + 1" aria-label="下一页">›</button></div></div>
     <div class="fvgate" v-if="!authUser"><p>登录后才能使用收藏本，收藏会保存在你的账号里，换设备也能看到。</p><button class="dbtn" type="button" @click="openLogin">登录</button></div>
     <p class="note fvempty" v-else-if="favState === 'loading'">正在加载收藏…</p>
     <div class="fvgate" v-else-if="favState === 'err'"><p>{{ favErr }}</p><button class="dbtn" type="button" @click="loadFavs">重试</button></div>
@@ -633,8 +637,6 @@ main .stick.fvstick{margin-top:-8px}
         <span class="fvm"><span class="fvt"><b class="spk" @click.stop="speakWord(f.key)" title="点击发音">{{ T(f.key) }}</b><i class="fk" :class="f.k">{{ FKN[f.k] }}</i></span><span class="fvz" :class="{hid: favHide && !favPeek[f.k + f.key]}" @click="favHide && !favPeek[f.k + f.key] && ($event.stopPropagation(), favPeek[f.k + f.key] = true)">{{ favMeaning(f) }}</span></span>
         <span class="fvc">›</span>
       </button>
-      <!-- 收藏分页器：样式沿用其它列表页的 .pager；超过一页（>10 条）才显示 -->
-      <div class="pager fvpager" v-if="favList.length > FPS"><button :disabled="favPageC === 0" @click="favPage = favPageC - 1" aria-label="上一页">‹</button><select :value="favPageC" @change="favPage = +$event.target.value"><option v-for="n in favPages" :value="n - 1" :key="n">{{ n }} / {{ favPages }}</option></select><button :disabled="favPageC >= favPages - 1" @click="favPage = favPageC + 1" aria-label="下一页">›</button></div>
     </div>
     <p class="note fvempty" v-else>这里还没有收藏。打开单词或短语的详情页，点右上角的书签就能收藏。</p>
   </template>
@@ -826,7 +828,7 @@ main .stick.fvstick{margin-top:-8px}
         <small class="pkm" v-if="loginMsg">{{ loginMsg }}</small>
       </template>
     </div></div>
-<div class="ftoast" v-if="favToast" role="status">{{ favToast }}</div>
+<transition name="tst"><div class="ftoast" v-if="favToast" role="status">{{ favToast }}</div></transition>
 <div class="tip" :style="{right: 'auto', left: tipPos.x + 'px', top: tipPos.y + 'px', transform: tipPos.up ? 'translateY(-100%)' : 'none'}" v-if="tip" @mouseenter="keepTip" @mouseleave="hideTip"><div class="th"><b>{{ tip.w }}</b><span class="ti" v-if="tipIpa(tip)">/{{ tipIpa(tip) }}/</span><span class="ps" v-if="tip.base !== tip.w.toLowerCase()">({{ tip.base }})</span><button class="dbtn" @click.stop="openDetail(tip.base)">详情 ›</button></div><div class="alt first"><i class="ps">{{ tip.pos }}</i>{{ tip.zh }}</div><div class="alt" v-for="m in (tip.more || [])" :key="m[0]"><i class="ps">{{ m[0] }}</i>{{ m[1] }}</div><div class="alt ol" v-if="tip.ol">在线查看：<a :href="'https://dictionary.cambridge.org/dictionary/english-chinese-simplified/' + encodeURIComponent(tip.base)" target="_blank" rel="noopener">剑桥</a> · <a :href="'https://www.oxfordlearnersdictionaries.com/definition/english/' + encodeURIComponent(tip.base)" target="_blank" rel="noopener">牛津</a></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
@@ -1794,7 +1796,8 @@ createApp({
       if (!authUser.value) return;
       if (!r || !r.ok) { favErr.value = r ? "收藏加载失败（状态码 " + r.status + "）" : "连不上后端，收藏没有加载"; favState.value = "err"; return; }
       const rows = await r.json();
-      favs.value = rows.filter(x => x.kind === "w" || x.kind === "p").reverse().map(x => ({ k: x.kind, key: x.word, id: x.id }));
+      // 类型不信数据库里存的 kind（以前同义词页一律存成了 w，带空格的短语被误标成单词），统一按文字重新判断：有空格=短语
+      favs.value = rows.filter(x => x.kind === "w" || x.kind === "p").reverse().map(x => ({ k: kindOf(x.word), key: x.word, id: x.id }));
       favState.value = "ok";
     };
     const favTab = ref("all");
@@ -1813,9 +1816,10 @@ createApp({
     const FKN = { w: "单词", p: "短语" };
     const kindOf = (t) => /\s/.test((t || "").trim()) ? "p" : "w";   // 收藏时前端自己判断：没有空格是单词，有空格是短语
     const favN = computed(() => ({ all: favs.value.length, w: favs.value.filter(f => f.k === "w").length, p: favs.value.filter(f => f.k === "p").length }));
-    const isFav = (k, key) => favs.value.some(f => f.k === k && f.key === key);
+    const isFav = (k, key) => { k = kindOf(key); return favs.value.some(f => f.k === k && f.key === key); };   // 传进来的 k 不再信，按文字算
     const favBusy = {};   // 正在和后端通信的收藏，避免连点
     const toggleFav = async (k, key) => {
+      k = kindOf(key);   // 同样按文字重新判断：同义词页/详情页传来的 'w' 可能其实是个短语
       if (!favOn) return;
       if (!authUser.value) { openLogin(); loginMsg.value = "登录后才能收藏"; return; }
       const bk = k + "|" + key; if (favBusy[bk]) return; favBusy[bk] = true;
@@ -1998,7 +2002,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 276, t: "10-30 20:18" };
+    const VER = { n: 277, t: "10-30 20:22" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
