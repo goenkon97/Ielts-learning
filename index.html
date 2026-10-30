@@ -419,9 +419,9 @@ header,.stick{background-color:var(--bgc);background-image:var(--bgl);background
 /* 手机上拖到顶部的回弹：禁止回弹，并让露出来的底色和页面一致 */
 html{overscroll-behavior-y:none;background-color:#e9dfc8}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){background-color:#0b0a08}}
-/* phone landscape: the browser leaves notch-side strips painted with the html color, so make the page flat-colored (same as html) and hide the inset frame -> no visible seam */
-@media (orientation:landscape) and (max-height:520px) and (hover:none){html::before,html::after{display:none!important}body,body:has(.hhead){background:#e9dfc8!important;background-image:none!important}}
-@media (orientation:landscape) and (max-height:520px) and (hover:none) and (prefers-color-scheme:dark){:root:not([data-theme="light"]) body,:root:not([data-theme="light"]) body:has(.hhead){background:#0b0a08!important;background-image:none!important}}
+/* phone landscape: the browser leaves notch-side strips painted with the html color, so make the page flat-colored (same as html) keep the inset frame lines */
+@media (orientation:landscape) and (max-height:520px) and (hover:none){body,body:has(.hhead),header,.stick{background:#e9dfc8!important;background-image:none!important}}
+@media (orientation:landscape) and (max-height:520px) and (hover:none) and (prefers-color-scheme:dark){:root:not([data-theme="light"]) body,:root:not([data-theme="light"]) body:has(.hhead),:root:not([data-theme="light"]) header,:root:not([data-theme="light"]) .stick{background:#0b0a08!important;background-image:none!important}}
 /* 首页右上角搜索框：窄屏上跟着剩余空间缩短，不再把页面撑宽 */
 .hhead{grid-template-columns:auto minmax(0,1fr)}
 .hhead .hs{width:auto;max-width:150px;min-width:0;justify-self:end;box-sizing:border-box;flex:none}
@@ -1987,7 +1987,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 274, t: "10-30 18:50" };
+    const VER = { n: 275, t: "10-30 19:10" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
