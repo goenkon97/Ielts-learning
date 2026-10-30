@@ -5,6 +5,12 @@
 <link rel="preconnect" href="https://audio.goenkon.com">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+/* iPad rotation fix: after portrait->landscape iOS can keep the old (narrow) layout viewport, leaving a blank strip. Re-apply the viewport meta to force a re-layout. */
+(function(){var VP="width=device-width, initial-scale=1, viewport-fit=cover";function fix(){try{var mt=document.querySelector('meta[name="viewport"]');if(!mt)return;mt.setAttribute("content",VP+", maximum-scale=1");setTimeout(function(){mt.setAttribute("content",VP);window.dispatchEvent(new Event("resize"))},120)}catch(e){}}
+function check(){try{var vv=window.visualViewport;if(vv&&vv.scale===1&&vv.width-document.documentElement.clientWidth>40)fix()}catch(e){}}
+window.addEventListener("orientationchange",function(){setTimeout(fix,250);setTimeout(check,900)});window.addEventListener("pageshow",function(){setTimeout(check,400)});window.addEventListener("load",function(){setTimeout(check,600)});window.addEventListener("resize",function(){clearTimeout(window.__vpT);window.__vpT=setTimeout(check,400)})})();
+</script>
 <title>Goen Kon · IELTS</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHN0eWxlPnBhdGh7ZmlsbDojMUY0RkQ2fUBtZWRpYShwcmVmZXJzLWNvbG9yLXNjaGVtZTpkYXJrKXtwYXRoe2ZpbGw6IzZGOTNGRn19PC9zdHlsZT48cGF0aCBkPSJNMTQuNTMgNTQuMjRRMTAuMTQgNTQuMjQgNi44OCA1Mi42MVEzLjYyIDUwLjk4IDEuODEgNDguMDRRMCA0NS4xMSAwIDQxLjE5VjIyLjgxUTAgMTguODMgMS44MSAxNS45M1EzLjYyIDEzLjAyIDYuODggMTEuMzlRMTAuMTQgOS43NiAxNC41MyA5Ljc2UTE4Ljg2IDkuNzYgMjIuMDkgMTEuMzlRMjUuMzMgMTMuMDIgMjcuMTQgMTUuOTNRMjguOTUgMTguODMgMjguOTUgMjIuODFIMjAuMDVRMjAuMDUgMjAuMiAxOC41OSAxOC44M1ExNy4xNCAxNy40NyAxNC40NyAxNy40N1ExMS44IDE3LjQ3IDEwLjM1IDE4LjgzUTguOSAyMC4yIDguOSAyMi44MVY0MS4xOVE4LjkgNDMuNzQgMTAuMzUgNDUuMTRRMTEuOCA0Ni41MyAxNC40NyA0Ni41M1ExNy4xNCA0Ni41MyAxOC41OSA0NS4xNFEyMC4wNSA0My43NCAyMC4wNSA0MS4xOVYzNy40NkgxMy42NFYyOS45MkgyOC45NVY0MS4xOVEyOC45NSA0NS4xMSAyNy4xNCA0OC4wNFEyNS4zMyA1MC45OCAyMi4wOSA1Mi42MVExOC44NiA1NC4yNCAxNC41MyA1NC4yNFpNMzMuNzUgNTMuNjVWMTAuMzVINDIuNjVWMjcuMTRINDYuODZMNTMuOTggMTAuMzVINjMuNjRMNTQuNzUgMzEuMDVMNjQgNTMuNjVINTQuMjFMNDYuODYgMzUuMzJINDIuNjVWNTMuNjVaIi8+PC9zdmc+"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -1971,7 +1977,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 270, t: "10-30 17:35" };
+    const VER = { n: 271, t: "10-30 17:55" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
