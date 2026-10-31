@@ -504,10 +504,10 @@ header{padding-top:23px;padding-bottom:15px}
 .stick .fvbar{margin:0}
 main .stick.fvstick{margin-top:-8px}
 .fvgate{text-align:center;padding:48px 8px;color:var(--sub)}.fvgate p{margin:0 0 16px;font-size:15px;line-height:1.6}.fvgate .dbtn{margin:0;padding:10px 32px;font-size:16px}
-.ftoast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:30;background:rgba(44,44,48,.55);color:#fff;-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border:1px solid rgba(255,255,255,.18);padding:9px 18px;border-radius:99px;font-size:14px;max-width:86vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.ftoast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;pointer-events:none;background:rgba(44,44,48,.78);color:#fff;-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border:1px solid rgba(255,255,255,.18);padding:9px 18px;border-radius:99px;font-size:14px;max-width:86vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.12)}
 /* 弹窗进出场：半透明 + 从上方轻轻滑下、淡入淡出（Vue 的 transition 会自动加这三组 class） */
 .tst-enter-active,.tst-leave-active{transition:opacity .28s ease,transform .28s ease}
-.tst-enter-from,.tst-leave-to{opacity:0;transform:translate(-50%,-14px)}
+.tst-enter-from,.tst-leave-to{opacity:0;transform:translate(-50%,-50%) scale(.92)}   /* 居中：淡入淡出 + 轻微缩放，不再上下滑动 */
 .fvmark{flex:none;border:0;background:none;color:var(--sub);cursor:pointer;padding:3px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}.fvmark svg{fill:none;transition:fill .15s}.fvmark.on{color:var(--blue)}.fvmark.on svg{fill:currentColor}.fvmark:hover{background:var(--line)}
 .word>.dbtn,.word>.fvmark{align-self:center}
 .chip .fvmark{margin-left:2px;padding:2px}
@@ -2047,7 +2047,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 281, t: "10-31 10:40" };
+    const VER = { n: 282, t: "10-31 17:10" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
