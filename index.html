@@ -498,7 +498,7 @@ header{padding-top:23px;padding-bottom:15px}
 .fvrw{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)}.fvrw:first-child{border-top:0}
 .fvrw .fvr{border-top:0;flex:1;min-width:0;width:auto}
 /* Learned 按钮：细线描边的胶囊，平时低调，悬停/按下变实心，不抢列表的视线 */
-.fvdone{flex:none;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;color:var(--sub);font:600 12px/1 inherit;font-family:inherit;padding:7px 11px;border-radius:999px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,border-color .15s}
+.fvdone{flex:none;align-self:center;margin-left:8px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;color:var(--sub);font:600 12px/1 inherit;font-family:inherit;padding:4px 9px;border-radius:999px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,border-color .15s}
 .fvdone:hover,.fvdone:active{background:var(--text);border-color:var(--text);color:var(--bg)}
 /* 书卷皮肤：藏青描边 + 金色悬停，和序号角标、播放键同一套配色 */
 html.skin-ox .fvdone{border-color:var(--ox-gold-d);color:var(--ox-navy)}
@@ -756,12 +756,12 @@ html.skin-ox .pkmask .pk{border-radius:6px}
       <!-- 每一行 = 外层 div（负责分隔线和横排）+ 左边整行可点的 fvr（打开详情）+ 右边 Learned 按钮。
            按钮不能嵌在 fvr 这个 button 里面（button 里不能再放 button，HTML 不合法），所以拆成并排两个 -->
       <div class="fvrw" v-for="f in pagedFav" :key="f.k + f.key">
-      <button class="fvr" type="button" @click="openFav(f)">
-        <span class="fvm"><span class="fvt"><b class="spk" @click.stop="speakWord(f.key)" title="点击发音">{{ T(f.key) }}</b><i class="fk" :class="f.k">{{ FKN[f.k] }}</i></span><span class="fvz" :class="{hid: favHide && !favPeek[f.k + f.key]}" @click="favHide && !favPeek[f.k + f.key] && ($event.stopPropagation(), favPeek[f.k + f.key] = true)">{{ favMeaning(f) }}</span></span>
+      <div class="fvr" role="button" tabindex="0" @click="openFav(f)" @keydown.enter.self="openFav(f)">
+        <span class="fvm"><span class="fvt"><b class="spk" @click.stop="speakWord(f.key)" title="点击发音">{{ T(f.key) }}</b><i class="fk" :class="f.k">{{ FKN[f.k] }}</i><!-- Learned：已学会 = 取消收藏。放在「单词/短语」标签右边；点它不应该打开详情，所以 @click.stop。
+             toggleFav 会先从 favs 里去掉这条（列表是响应式的，当前页立刻刷新，页码自动夹回有效范围），再发 DELETE，失败会放回去 -->
+<button class="fvdone" type="button" @click.stop="toggleFav(f.k, f.key)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Learned</button></span><span class="fvz" :class="{hid: favHide && !favPeek[f.k + f.key]}" @click="favHide && !favPeek[f.k + f.key] && ($event.stopPropagation(), favPeek[f.k + f.key] = true)">{{ favMeaning(f) }}</span></span>
         <span class="fvc">›</span>
-      </button>
-      <!-- Learned：已学会 = 取消收藏。toggleFav 会先从 favs 里去掉这条（列表是响应式的，当前页立刻刷新，页码也会自动夹回有效范围），再发 DELETE 请求，失败会放回去 -->
-      <button class="fvdone" type="button" @click="toggleFav(f.k, f.key)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Learned</button>
+      </div>
       </div>
     </div>
     <p class="note fvempty" v-else>这里还没有收藏。打开单词或短语的详情页，点右上角的书签就能收藏。</p>
@@ -2180,7 +2180,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 285, t: "10-31 18:40" };
+    const VER = { n: 286, t: "10-31 19:00" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
