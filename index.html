@@ -21,6 +21,12 @@ fix();window.addEventListener("DOMContentLoaded",fix);window.addEventListener("l
 <title>Goen Kon · IELTS</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHN0eWxlPnBhdGh7ZmlsbDojMUY0RkQ2fUBtZWRpYShwcmVmZXJzLWNvbG9yLXNjaGVtZTpkYXJrKXtwYXRoe2ZpbGw6IzZGOTNGRn19PC9zdHlsZT48cGF0aCBkPSJNMTQuNTMgNTQuMjRRMTAuMTQgNTQuMjQgNi44OCA1Mi42MVEzLjYyIDUwLjk4IDEuODEgNDguMDRRMCA0NS4xMSAwIDQxLjE5VjIyLjgxUTAgMTguODMgMS44MSAxNS45M1EzLjYyIDEzLjAyIDYuODggMTEuMzlRMTAuMTQgOS43NiAxNC41MyA5Ljc2UTE4Ljg2IDkuNzYgMjIuMDkgMTEuMzlRMjUuMzMgMTMuMDIgMjcuMTQgMTUuOTNRMjguOTUgMTguODMgMjguOTUgMjIuODFIMjAuMDVRMjAuMDUgMjAuMiAxOC41OSAxOC44M1ExNy4xNCAxNy40NyAxNC40NyAxNy40N1ExMS44IDE3LjQ3IDEwLjM1IDE4LjgzUTguOSAyMC4yIDguOSAyMi44MVY0MS4xOVE4LjkgNDMuNzQgMTAuMzUgNDUuMTRRMTEuOCA0Ni41MyAxNC40NyA0Ni41M1ExNy4xNCA0Ni41MyAxOC41OSA0NS4xNFEyMC4wNSA0My43NCAyMC4wNSA0MS4xOVYzNy40NkgxMy42NFYyOS45MkgyOC45NVY0MS4xOVEyOC45NSA0NS4xMSAyNy4xNCA0OC4wNFEyNS4zMyA1MC45OCAyMi4wOSA1Mi42MVExOC44NiA1NC4yNCAxNC41MyA1NC4yNFpNMzMuNzUgNTMuNjVWMTAuMzVINDIuNjVWMjcuMTRINDYuODZMNTMuOTggMTAuMzVINjMuNjRMNTQuNzUgMzEuMDVMNjQgNTMuNjVINTQuMjFMNDYuODYgMzUuMzJINDIuNjVWNTMuNjVaIi8+PC9zdmc+"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
+<script>
+/* 皮肤：页面一打开（Vue 还没启动）就先把 class 加到 <html> 上，否则会先闪一下旧样式再变。
+   localStorage 里 ieltsSkin 存 'classic'（原来的金色质感）或 'ox'（Oxford 书卷）；没存过就默认新的书卷皮肤。
+   书卷皮肤是浅色设计，所以同时给 <html> 写上 data-theme="light"，让手机的"深色模式"规则不生效，不会出现浅底深字被反色的问题。 */
+try{ if(localStorage.getItem('ieltsSkin')!=='classic'){ document.documentElement.classList.add('skin-ox'); document.documentElement.setAttribute('data-theme','light'); } }catch(e){ document.documentElement.classList.add('skin-ox'); document.documentElement.setAttribute('data-theme','light'); }
+</script>
 <style>
 :root{--bg:#f5f5f7;--card:#fff;--text:#1d1d1f;--sub:#6e6e73;--blue:#8a6414;--chip:#e0d2ae;--line:#e5e5ea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--card:#1c1c1e;--text:#f5f5f7;--sub:#98989d;--blue:#e8c27a;--chip:#2e2616;--line:#2c2c2e}}
@@ -514,6 +520,113 @@ main .stick.fvstick{margin-top:-8px}
 .chip .fvmark svg{width:17px;height:17px}
 .fk.c{background:var(--chip);color:var(--blue)}
 .fvseg button{padding-left:6px;padding-right:6px}
+
+/* ==========================================================================
+   皮肤「Oxford 书卷」（html.skin-ox）
+   【原理】站里原来的"金色质感"主题是一层一层叠上去的（噪点纹理、金色双线框、渐变卡片、黑金按钮……），
+   而且很多颜色是直接写死的。所以这里不去改旧规则，而是在 <html> 带有 skin-ox 这个 class 时，
+   用更高优先级的选择器（都以 html.skin-ox 开头）把它们逐个盖掉：
+     ① 先把 CSS 变量换成"奶油纸 + 海军蓝 + 金色"；② 把噪点纹理变量 --grain 设成 none（一行就关掉全站噪点）；
+     ③ 去掉金色双线框；④ 深海军蓝的顶栏 + 金线；⑤ 卡片改成平整的纸片；⑥ 首页模块改成罗马数字编号的书目卡。
+   去掉 skin-ox 这个 class（点首页的"皮肤"按钮切回经典）就完全是原来的样子，两套互不影响。
+   ========================================================================== */
+html.skin-ox{
+  --bg:#f5efe2;--card:#fbf7ec;--text:#1b2a4a;--sub:#6b6a63;--blue:#14213d;--chip:#ece3cc;--line:#d9cba6;
+  --grain:none;--grain-c:none;--grain-c2:none;                      /* 关掉全站噪点纹理 */
+  --ox-navy:#14213d;--ox-gold:#c9a24a;--ox-gold-d:#a8802b;--ox-paper:#f5efe2;
+  --ox-serif:"Cormorant Garamond","New York","Iowan Old Style","Palatino","Songti SC","Noto Serif SC",Georgia,serif;
+  background-color:var(--ox-navy);          /* 手机刘海/底部安全区露出来的是 <html> 的底色，用海军蓝和顶栏连成一片 */
+}
+html.skin-ox body,html.skin-ox body:has(.hhead){--bgc:var(--ox-paper);--bgl:none;background:var(--ox-paper);background-image:none}
+html.skin-ox::before,html.skin-ox::after{display:none}                /* 去掉金色双线框 */
+/* 顶栏：深海军蓝，米色字，底边一条金线 */
+html.skin-ox header{background:var(--ox-navy);background-image:none;color:var(--ox-paper);box-shadow:0 3px 0 var(--ox-gold);-webkit-backdrop-filter:none;backdrop-filter:none;position:sticky}
+html.skin-ox header b{color:var(--ox-paper);font-family:var(--ox-serif);letter-spacing:.14em;font-weight:700}
+html.skin-ox header b .ver{color:var(--ox-gold);letter-spacing:.04em;font-family:inherit}
+html.skin-ox #back{color:var(--ox-gold)}
+html.skin-ox #homebtn{color:var(--ox-gold);border:1px solid var(--ox-gold);border-radius:50%;width:36px;height:36px;padding:0;background:none}   /* 回首页按钮和收藏本一样：金色圆框 */
+html.skin-ox #homebtn:hover{background:rgba(201,162,74,.15)}   /* 顶栏右侧的按钮（收藏本、回首页）统一金色 */
+html.skin-ox #favbtn{color:var(--ox-gold);border:1px solid var(--ox-gold);border-radius:50%;width:36px;height:36px;padding:0}
+html.skin-ox #favbtn:hover{background:rgba(201,162,74,.15)}
+html.skin-ox .stick{background:var(--ox-paper);background-image:none}
+html.skin-ox main{padding-top:14px}
+/* 首页：名字、座右铭、搜索框也放进海军蓝的头部里（用超宽阴影把蓝色铺满整个屏幕宽度） */
+html.skin-ox main:has(.hhead){padding-top:0}
+html.skin-ox .hhead{background:var(--ox-navy);color:var(--ox-paper);margin:0 0 22px;padding:14px 0 22px;box-shadow:0 0 0 100vmax var(--ox-navy),0 3px 0 100vmax var(--ox-gold);clip-path:inset(0 -100vmax -3px)}
+html.skin-ox .hhead .nm{color:var(--ox-paper);font-family:var(--ox-serif);font-weight:700;letter-spacing:.005em}
+html.skin-ox .hhead .mot{color:#d9cfb6;font-family:var(--ox-serif);font-style:italic;font-size:19px}
+html.skin-ox .ltag{background:var(--ox-gold)!important;background-image:none!important;color:var(--ox-navy)!important;box-shadow:none!important}
+html.skin-ox .pkbtn{background:transparent!important;background-image:none!important;border:1px solid var(--ox-gold)!important;color:var(--ox-gold)!important;box-shadow:none!important}
+html.skin-ox .hs{background:rgba(245,239,226,.1);background-image:none;border:1px solid rgba(201,162,74,.65);border-radius:4px;color:var(--ox-paper);box-shadow:none}
+html.skin-ox .hs input{color:var(--ox-paper)}
+html.skin-ox .hs input::placeholder{color:#b9b19b}
+html.skin-ox .hs svg{color:var(--ox-gold);stroke:var(--ox-gold)}
+html.skin-ox .hs:focus-within{box-shadow:0 0 0 2px var(--ox-gold)}
+html.skin-ox .hsl{background:var(--card);border:1px solid var(--line);border-radius:4px}
+html.skin-ox .skinbtn{font-family:inherit;font-size:12px;font-weight:700;padding:0 10px;width:auto;border-radius:99px;white-space:nowrap}
+
+/* 首页六个模块：罗马数字编号的"书目卡"，最后一张深蓝色 */
+html.skin-ox .hgrid{gap:12px}
+html.skin-ox main:has(.hhead) .hgrid .tile,html.skin-ox .hgrid .tile{display:flex;flex-direction:column;min-height:150px!important;padding:14px 16px 14px;background:var(--card);background-image:none;border:1px solid var(--line);border-radius:4px;box-shadow:none;overflow:hidden;transform:none}
+html.skin-ox .hgrid .tile::after,html.skin-ox main:has(.hhead) .hgrid .tile::after{content:counter(t,upper-roman) ".";position:static;order:-1;font:italic 400 16px/1 var(--ox-serif);color:var(--ox-gold-d);opacity:1;letter-spacing:0}
+html.skin-ox .hgrid .tile .ico,html.skin-ox main:has(.hhead) .hgrid .tile .ico{width:auto!important;height:auto!important;background:none!important;box-shadow:none!important;border-radius:0!important;margin:10px 0 0}
+html.skin-ox .hgrid .ico svg g,html.skin-ox .hgrid .ico.i1 svg g,html.skin-ox .hgrid .ico.i2 svg g,html.skin-ox .hgrid .ico.i3 svg g,html.skin-ox .hgrid .ico.i4 svg g,html.skin-ox .hgrid .ico.i5 svg g,html.skin-ox .hgrid .ico.i6 svg g{stroke:var(--ox-navy)!important;stroke-width:3!important}
+html.skin-ox .hgrid .tile h2,html.skin-ox main:has(.hhead) .hgrid .tile h2{margin:auto 0 0;color:var(--text);font-size:17px!important;font-weight:700}
+html.skin-ox .hgrid .tile p,html.skin-ox main:has(.hhead) .hgrid .tile p{color:var(--sub);margin:2px 0 0}
+html.skin-ox .hgrid .tile:hover{box-shadow:none;border-color:var(--ox-gold)}
+html.skin-ox main:has(.hhead) .hgrid .tile:last-child{background:var(--ox-navy);border-color:var(--ox-navy)}
+html.skin-ox main:has(.hhead) .hgrid .tile:last-child::after{color:var(--ox-gold)}
+html.skin-ox main:has(.hhead) .hgrid .tile:last-child h2{color:var(--ox-paper)}
+html.skin-ox main:has(.hhead) .hgrid .tile:last-child p{color:#cfc6ad}
+html.skin-ox main:has(.hhead) .hgrid .tile:last-child .ico svg g{stroke:var(--ox-gold)!important}
+
+/* ---------- 一级 / 二级页面 ---------- */
+html.skin-ox main .card,html.skin-ox main .card:has(article),html.skin-ox .card{background:var(--card);background-image:none;border:1px solid var(--line);border-radius:6px;box-shadow:none}
+html.skin-ox main .card:has(article)::before,html.skin-ox .st.sel::before{display:none}   /* 文章卡片上叠的噪点层 */
+html.skin-ox main .card .word,html.skin-ox main .card h3{color:var(--text)}
+html.skin-ox h1,html.skin-ox .dtitle h1,html.skin-ox .artview h1,html.skin-ox .hw{font-family:var(--ox-serif)}
+html.skin-ox main .count,html.skin-ox main .cnt{color:var(--ox-gold-d)}
+html.skin-ox .lead{color:var(--sub)}
+html.skin-ox main .stick>input[type=search]{background:var(--card);border:1px solid var(--line);border-radius:4px;color:var(--text)}
+html.skin-ox main .stick>input[type=search]::placeholder{color:#a39a82}
+html.skin-ox .seg{background:var(--chip);background-image:none;border-radius:4px}
+html.skin-ox .seg button{color:var(--text);border-radius:3px}
+html.skin-ox .seg button.on{background:var(--ox-navy);color:var(--ox-gold);box-shadow:none}
+html.skin-ox main .pager button,html.skin-ox main .pager select{background:var(--chip)!important;background-image:none!important;color:var(--ox-navy)!important;border-radius:4px}
+html.skin-ox .cats button{background:var(--chip);background-image:none;color:#6b5a2a;box-shadow:none;border-radius:4px}
+html.skin-ox .cats button:not(.on){background:var(--card);color:#6b5a2a;box-shadow:inset 0 0 0 1px var(--line)}
+html.skin-ox .cats button.on{background:var(--ox-navy)!important;color:var(--ox-gold)!important;box-shadow:none}
+html.skin-ox .cf-t,html.skin-ox .cf-t.on{background:var(--ox-navy)!important;color:var(--ox-gold)!important;box-shadow:none}
+html.skin-ox .cf-t i{color:var(--ox-gold)}
+html.skin-ox .rl>span{color:var(--ox-gold-d)}
+/* 序号角标：海军蓝底 + 金字 */
+html.skin-ox .no,html.skin-ox .card.lk .word .no,html.skin-ox .card.sc .word.sy .no{background:var(--ox-navy)!important;background-image:none!important;color:var(--ox-gold)!important;text-shadow:none!important;box-shadow:none!important}
+/* 标签 / 小按钮 */
+html.skin-ox .chip,html.skin-ox .chips .chip,html.skin-ox .kw .chips .chip,html.skin-ox .chips.sp .chip{background:var(--chip)!important;background-image:none!important;color:var(--ox-navy)}
+html.skin-ox .dbtn{background:rgba(201,162,74,.2)!important;background-image:none!important;color:var(--ox-navy)!important}
+html.skin-ox .anav .dbtn{background:var(--chip)!important;color:var(--ox-navy)!important}
+html.skin-ox .pm,html.skin-ox .pchip{background:#efe0b8!important;background-image:none!important;color:#6b4f12}
+html.skin-ox .fq.f3,html.skin-ox .ck.m{background:var(--ox-navy);color:var(--ox-gold)}
+html.skin-ox .fq.f2{background:#efe0b8;color:#6b4f12}html.skin-ox .fq.f1{background:var(--chip);color:#4d4234}html.skin-ox .fq.f0{background:#e9e4d6;color:#6b6a63}
+html.skin-ox .ck.s,html.skin-ox .ck.v,html.skin-ox .ck.o,html.skin-ox .ck.c,html.skin-ox .ck.a{background:var(--chip);color:#4d4234}
+/* 难度标签 Lv：由浅蓝到深蓝再到金 */
+html.skin-ox .lvb{background:#e3ebf5;color:#1b3a66}
+html.skin-ox .lvb.l2{background:#d3dff0;color:#14304f}html.skin-ox .lvb.l3{background:#efe3c0;color:#6b4f12}html.skin-ox .lvb.l4{background:#e5d092;color:#5a3d08}html.skin-ox .lvb.l5{background:var(--ox-navy);color:var(--ox-gold)}html.skin-ox .lvb.l6{background:var(--ox-gold);color:var(--ox-navy)}
+/* 朗读按钮、主要按钮：海军蓝 */
+html.skin-ox .play{background:var(--ox-navy);color:var(--ox-gold)}
+html.skin-ox main .play:not(.rep),html.skin-ox .exb .play:not(.rep){background:var(--ox-navy)!important;color:var(--ox-gold)!important}
+html.skin-ox .play .eq i{background:var(--ox-gold)}
+html.skin-ox .play.rep{background:var(--chip);color:var(--ox-navy)}
+html.skin-ox .play.rep.on{background:var(--ox-navy);color:var(--ox-gold)}
+/* 展开面板 / 例句框 */
+html.skin-ox .exb,html.skin-ox .st.sel{background:#f2ead6;background-image:none;border:1px solid var(--line);box-shadow:none;border-radius:4px}
+html.skin-ox .gi{stroke:var(--ox-navy)}
+html.skin-ox .ico.flat svg g{stroke:var(--ox-navy)!important}
+html.skin-ox .tile .ico,html.skin-ox .ico{box-shadow:none}
+html.skin-ox .fvmark.on,html.skin-ox .favstar.on{color:var(--ox-gold-d)}
+html.skin-ox .tbar .a{background:var(--ox-gold)}html.skin-ox .tbar .b{background:var(--ox-gold-d)}html.skin-ox .tbar .c{background:var(--ox-navy)}
+html.skin-ox .ftoast{background:rgba(20,33,61,.86);border-color:rgba(201,162,74,.5);color:var(--ox-paper)}   /* 提示弹窗：海军蓝半透明 */
+html.skin-ox .pkmask .pk{border-radius:6px}
 </style>
 </head>
 <body>
@@ -525,7 +638,7 @@ main .stick.fvstick{margin-top:-8px}
 </header>
 <main>
   <template v-if="view==='home'">
-    <div class="hhead"><div class="sig"><span class="nm">Goen Kon</span><button class="ltag" @click="lang = lang==='uk' ? 'us' : 'uk'" aria-label="切换英音/美音">{{ lang==='uk' ? '英' : '美' }}</button><button class="pkbtn" v-if="pack.ok" @click="pkOpen=true" aria-label="离线语音包"><svg v-if="!pack.total || (pack.done<pack.total && !pack.run)" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><b v-else-if="pack.run">{{ Math.floor(pack.done / pack.total * 100) }}%</b><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="pkbtn lgbtn" v-if="loginOn" @click="openLogin" :aria-label="authUser ? '账号' : '登录'"><img v-if="authUser && authUser.picture" :src="authUser.picture" alt="" referrerpolicy="no-referrer"><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button></div>
+    <div class="hhead"><div class="sig"><span class="nm">Goen Kon</span><button class="ltag" @click="lang = lang==='uk' ? 'us' : 'uk'" aria-label="切换英音/美音">{{ lang==='uk' ? '英' : '美' }}</button><button class="pkbtn" v-if="pack.ok" @click="pkOpen=true" aria-label="离线语音包"><svg v-if="!pack.total || (pack.done<pack.total && !pack.run)" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><b v-else-if="pack.run">{{ Math.floor(pack.done / pack.total * 100) }}%</b><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="pkbtn lgbtn" v-if="loginOn" @click="openLogin" :aria-label="authUser ? '账号' : '登录'"><img v-if="authUser && authUser.picture" :src="authUser.picture" alt="" referrerpolicy="no-referrer"><svg v-else viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button><button class="pkbtn skinbtn" type="button" @click="toggleSkin" :aria-label="'切换皮肤'" :title="'切换皮肤'">{{ skin==='ox' ? '书卷' : '经典' }}</button></div>
     <p class="mot">I can do all things.</p>
       <div class="hs"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input v-model="sq" type="text" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false" @keydown.enter="sugs.length && pickS(sugs[0].w)" @keydown.esc="sq = ''"><button v-if="sq" class="hx" @click="sq = ''" aria-label="清除">×</button>
         <div class="hsl" v-if="sugs.length"><button v-for="s in sugs" :key="s.w" @click="pickS(s.w)"><b>{{ s.w }}</b><i v-if="s.pos">{{ s.pos }}</i><span>{{ s.zh }}</span></button></div></div></div>
@@ -1245,6 +1358,16 @@ SYN.push(...XSYN); CATS.splice(0, CATS.length, "全部", "重点", ...Array.from
 const { createApp, ref, computed, watch } = Vue;
 createApp({
   setup() {
+    /* 皮肤：'ox'（Oxford 书卷，默认）或 'classic'（原来的金色质感）。
+       class 在页面最前面的 <script> 里已经加好了；这里的 skin 只用来让按钮上显示当前是哪个，以及处理点击切换。 */
+    const skin = ref((() => { try { return localStorage.getItem("ieltsSkin") === "classic" ? "classic" : "ox"; } catch (e) { return "ox"; } })());
+    const toggleSkin = () => {
+      skin.value = skin.value === "ox" ? "classic" : "ox";
+      const on = skin.value === "ox", d = document.documentElement;
+      d.classList.toggle("skin-ox", on);                         // CSS 靠这个 class 切换整站外观
+      if (on) d.setAttribute("data-theme", "light"); else d.removeAttribute("data-theme");   // 书卷皮肤只做浅色；经典皮肤恢复跟随系统深浅色
+      try { localStorage.setItem("ieltsSkin", skin.value); } catch (e) {}   // 记住选择，下次打开还是这个皮肤
+    };
     const lang = ref("uk"), view = ref("home"), artIdx = ref(0), quiz = ref(false), q = ref(""), shown = ref({});
     const T = (s) => lang.value === "uk" ? s : PAIRS.reduce((t, p) => t.split(p[0]).join(p[1]), s);
     const pick = (L) => { const sc = v => (/natural|neural|premium|enhanced|online/i.test(v.name) ? 4 : 0) + (/google|samantha|daniel|serena|libby|sonia|aria|jenny|ava|allison|kate|oliver/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1); return speechSynthesis.getVoices().filter(v => v.lang.replace("_", "-") === L).sort((a, b) => sc(b) - sc(a))[0]; };
@@ -2047,7 +2170,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 282, t: "10-31 17:10" };
+    const VER = { n: 283, t: "10-31 18:00" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -2150,7 +2273,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { FPS, favPage, favPages, favPageC, pagedFav, expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favOn, favState, FKN, wk, kindOf, phrRow, phrKey, openPhr, favErr, favToast, loadFavs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { skin, toggleSkin, FPS, favPage, favPages, favPageC, pagedFav, expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favOn, favState, FKN, wk, kindOf, phrRow, phrKey, openPhr, favErr, favToast, loadFavs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, looping, toggleLoop, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
