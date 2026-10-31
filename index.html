@@ -499,10 +499,15 @@ header{padding-top:23px;padding-bottom:15px}
 .fvrw .fvr{border-top:0;flex:1;min-width:0;width:auto}
 /* Learned 按钮：细线描边的胶囊，平时低调，悬停/按下变实心，不抢列表的视线 */
 .fvdone{flex:none;align-self:center;margin-left:auto;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;color:var(--sub);font:600 12px/1 inherit;font-family:inherit;padding:4px 9px;border-radius:999px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,border-color .15s}
-.fvdone:hover,.fvdone:active{background:var(--text);border-color:var(--text);color:var(--bg)}
+/* 修复"颜色残留到下一条"：手机上点完按钮后，这一条消失、下面一条滑上来正好停在手指位置，
+   手机浏览器会把"悬停(:hover)"状态粘在手指最后触碰的位置，于是下一条的按钮也变色。
+   做法：:hover 只在真正有鼠标的设备上生效（@media (hover:hover)），触屏设备只保留按下时才有的 :active，手指一松就恢复。 */
+.fvdone:active{background:var(--text);border-color:var(--text);color:var(--bg)}
+@media (hover:hover){.fvdone:hover{background:var(--text);border-color:var(--text);color:var(--bg)}}
 /* 书卷皮肤：藏青描边 + 金色悬停，和序号角标、播放键同一套配色 */
 html.skin-ox .fvdone{border-color:var(--ox-gold-d);color:var(--ox-navy)}
-html.skin-ox .fvdone:hover,html.skin-ox .fvdone:active{background:var(--ox-navy);border-color:var(--ox-navy);color:var(--ox-gold)}
+html.skin-ox .fvdone:active{background:var(--ox-navy);border-color:var(--ox-navy);color:var(--ox-gold)}
+@media (hover:hover){html.skin-ox .fvdone:hover{background:var(--ox-navy);border-color:var(--ox-navy);color:var(--ox-gold)}}
 .fvm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .fvt{display:flex;align-items:baseline;gap:8px;min-width:0}.fvt b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fk{flex:none;font-style:normal;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--line);color:var(--sub)}.fk.p{background:var(--chip);color:var(--blue)}
@@ -2182,7 +2187,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 288, t: "10-31 19:40" };
+    const VER = { n: 289, t: "10-31 20:00" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
