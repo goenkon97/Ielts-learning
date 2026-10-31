@@ -1255,7 +1255,7 @@ createApp({
     // 后端地址：本机预览时连你电脑上的 Spring Boot（8080 端口）；线上后端还没部署，先留空
     const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname) ? "http://localhost:8080" : "https://ielts-backend-node.vercel.app";
     // 页面一打开就悄悄叫醒后端和数据库（免费版会休眠），不等结果、失败也不管
-    if (API_BASE) { try { fetch(API_BASE + "/health").catch(() => {}); } catch (e) {} }
+    if (API_BASE) { try { fetch(API_BASE + "/health", { cache: "no-store" }).catch(() => {}); } catch (e) {} }
     // 开关：true = 显示登录入口。想临时隐藏，把它改成 false 即可
     const loginOn = true;
     const loginOpen = ref(false);   // 登录弹窗开没开
@@ -1340,6 +1340,9 @@ createApp({
     const saveUser = (u) => { try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch (e) {} };
     const loadUser = () => { try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch (e) { return null; } };
     const clearUser = () => { try { localStorage.removeItem(USER_KEY); } catch (e) {} };
+    // 【真正的原因】/me、/health 这类 GET 响应会被浏览器缓存（再次请求时服务器回 304 Not Modified）。
+    //   而缓存里存的"允许跨域的网站"是 jlpt 站的，雅思站拿来用就对不上，被浏览器拦成 CORS 错误 → Failed to fetch → 看起来像没登录。
+    //   所以所有访问后端的请求都加 cache:"no-store"，每次都向服务器要新的。
     const restoreLogin = async () => {
       const t = loadToken();
       if (!t || !API_BASE) return;
@@ -1348,7 +1351,7 @@ createApp({
       for (let i = 0; i < 4; i++) {           // ② 最多试 4 次（间隔 0 / 1.5 / 3 / 4.5 秒）
         if (i) await new Promise((ok) => setTimeout(ok, 1500 * i));
         try {
-          const r = await fetch(API_BASE + "/me", { headers: { Authorization: "Bearer " + t } });   // 请求头格式：Authorization: Bearer xxxx
+          const r = await fetch(API_BASE + "/me", { cache: "no-store", headers: { Authorization: "Bearer " + t } });   // 请求头格式：Authorization: Bearer xxxx
           if (r.ok) {
             const u = await r.json();
             const me = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
@@ -1824,7 +1827,7 @@ createApp({
     const authFetch = async (path, opt) => {
       const o = Object.assign({}, opt || {});
       o.headers = Object.assign({ Authorization: "Bearer " + loadToken() }, o.body ? { "Content-Type": "application/json" } : {}, o.headers || {});
-      let r; try { r = await fetch(API_BASE + path, o); } catch (e) { return null; }
+      let r; try { r = await fetch(API_BASE + path, Object.assign({ cache: "no-store" }, o)); } catch (e) { return null; }
       if (r.status === 401) { clearToken(); clearUser(); authUser.value = null; verifyMsg.value = ""; favs.value = []; favState.value = "idle"; toast("登录已过期，请重新登录"); openLogin(); return null; }
       return r;
     };
@@ -2044,7 +2047,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 280, t: "10-31 10:20" };
+    const VER = { n: 281, t: "10-31 10:40" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
