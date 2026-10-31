@@ -1292,6 +1292,7 @@ createApp({
         const u = d.user;
         authUser.value = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
         saveToken(d.token);                 // 存进 localStorage：刷新页面后还能用它恢复登录
+        saveUser(authUser.value);           // 用户资料也缓存一份：刷新后界面立刻显示已登录
         loadFavs();                         // 登录成功后，取回这个账号的收藏
         verifyMsg.value = "后端验证通过，用户编号 #" + u.id + "。已拿到我们自己的 token 并保存，刷新页面会自动恢复登录。";
         loginOpen.value = false; toast("登录成功"); goHome();   // 登录成功：关掉登录窗，提示一下，回到首页
@@ -1318,7 +1319,7 @@ createApp({
     const doLogout = () => {
       if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
       authUser.value = null; idToken = ""; verifyMsg.value = ""; loginOpen.value = false;
-      clearToken();   // token 也一起删掉
+      clearToken(); clearUser();   // token 和缓存的用户资料也一起删掉
       favs.value = []; favState.value = "idle";   // 收藏是账号的，退出后清空显示
     };
     /* ===== C3：我们自己的 token 存在 localStorage，刷新页面后靠它恢复登录 ===== */
@@ -1328,20 +1329,43 @@ createApp({
     const loadToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } };
     const clearToken = () => { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} };
     // 页面启动时：如果存着 token，就带着它去问后端「我是谁」
+    // 【为什么要改成这样】Vercel 的后端是"无服务器函数"，一段时间没人访问会休眠，下一次请求要"冷启动"
+    //   （启动 Node + 连数据库，可能要好几秒，甚至第一次就失败返回 5xx/超时）。
+    //   以前的写法：/me 一失败就当作"没登录"，页面上就显示成未登录，看起来像"刷新就掉登录"。
+    // 现在的做法（三层保护）：
+    //   ① 用户资料（名字/邮箱/头像）也缓存在 localStorage（USER_KEY）。刷新后先立刻用缓存把界面显示成"已登录"，不用等后端；
+    //   ② 再去后端 /me 核实。网络失败 / 5xx（服务器还在冷启动）→ 等一会儿自动重试，最多 4 次，期间保持已登录显示；
+    //   ③ 只有后端明确回 401（token 真的无效/过期）才清掉 token 和缓存，并提示用户重新登录（同时把状态码提示出来，方便排查）。
+    const USER_KEY = "ielts_user";
+    const saveUser = (u) => { try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch (e) {} };
+    const loadUser = () => { try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch (e) { return null; } };
+    const clearUser = () => { try { localStorage.removeItem(USER_KEY); } catch (e) {} };
     const restoreLogin = async () => {
       const t = loadToken();
       if (!t || !API_BASE) return;
-      try {
-        const r = await fetch(API_BASE + "/me", { headers: { Authorization: "Bearer " + t } });   // 请求头格式：Authorization: Bearer xxxx
-        if (r.ok) {
-          const u = await r.json();
-          authUser.value = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
-          verifyMsg.value = "已用保存的 token 自动恢复登录，用户编号 #" + u.id + "。";
-          loadFavs();
-        } else if (r.status === 401) {
-          clearToken();   // token 过期或无效：删掉，让用户重新登录
-        }
-      } catch (e) { /* 后端没开：保持未登录，但不删 token，等后端开了再恢复 */ }
+      const cached = loadUser();
+      if (cached) authUser.value = cached;   // ① 先用缓存把界面显示成已登录
+      for (let i = 0; i < 4; i++) {           // ② 最多试 4 次（间隔 0 / 1.5 / 3 / 4.5 秒）
+        if (i) await new Promise((ok) => setTimeout(ok, 1500 * i));
+        try {
+          const r = await fetch(API_BASE + "/me", { headers: { Authorization: "Bearer " + t } });   // 请求头格式：Authorization: Bearer xxxx
+          if (r.ok) {
+            const u = await r.json();
+            const me = { name: u.name || u.email, email: u.email, picture: u.picture || "" };
+            authUser.value = me; saveUser(me);
+            verifyMsg.value = "已用保存的 token 自动恢复登录，用户编号 #" + u.id + "。";
+            loadFavs();
+            return;
+          }
+          if (r.status === 401) {   // ③ 明确无效：这才真的退出登录
+            clearToken(); clearUser(); authUser.value = null; favs.value = []; favState.value = "idle";
+            console.warn("[restoreLogin] /me 返回 401，token 无效或已过期");
+            toast("登录已失效（401），请重新登录");
+            return;
+          }
+          console.warn("[restoreLogin] /me 返回 " + r.status + "，稍后重试");   // 5xx 等：服务器还没准备好，重试
+        } catch (e) { console.warn("[restoreLogin] 连不上后端，稍后重试", e); }   // 网络错误 / CORS 失败：同样重试，不删 token
+      }
     };
     restoreLogin();
     const mk = (s) => { const u = new SpeechSynthesisUtterance(s); const k = playing.value; u.onerror = u.onend = () => { if (playing.value === k) playing.value = ""; }; return u; };
@@ -1801,7 +1825,7 @@ createApp({
       const o = Object.assign({}, opt || {});
       o.headers = Object.assign({ Authorization: "Bearer " + loadToken() }, o.body ? { "Content-Type": "application/json" } : {}, o.headers || {});
       let r; try { r = await fetch(API_BASE + path, o); } catch (e) { return null; }
-      if (r.status === 401) { clearToken(); authUser.value = null; verifyMsg.value = ""; favs.value = []; favState.value = "idle"; toast("登录已过期，请重新登录"); openLogin(); return null; }
+      if (r.status === 401) { clearToken(); clearUser(); authUser.value = null; verifyMsg.value = ""; favs.value = []; favState.value = "idle"; toast("登录已过期，请重新登录"); openLogin(); return null; }
       return r;
     };
     // 登录后从后端取回这个账号的全部收藏（后端按编号从小到大返回，翻过来让最新的在最上面）
@@ -2020,7 +2044,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 279, t: "10-30 21:47" };
+    const VER = { n: 280, t: "10-31 10:20" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
