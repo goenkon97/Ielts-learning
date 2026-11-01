@@ -495,6 +495,13 @@ header{padding-top:23px;padding-bottom:15px}
 .fvpager{justify-content:center;padding:8px 0 0}   /* 收藏分页器居中，放在吸顶栏下面一行 */
 .fvr{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;padding:14px 0;cursor:pointer}.fvr:first-child{border-top:0}
 /* 收藏本每一行：.fvrw 接管分隔线和横排，原来的 .fvr（整行可点）占满剩余宽度，右边是 Learned 按钮 */
+/* 「正在请求数据…」悬浮框：固定在页面上方正中，不挡点击（pointer-events:none） */
+.netbox{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:9998;pointer-events:none;display:flex;align-items:center;gap:8px;background:rgba(44,44,48,.82);color:#fff;-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.04em;white-space:nowrap}
+.netspin{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:netrot .8s linear infinite}
+@keyframes netrot{to{transform:rotate(360deg)}}
+.nt-enter-active,.nt-leave-active{transition:opacity .2s ease}.nt-enter-from,.nt-leave-to{opacity:0}
+html.skin-ox .netbox{background:rgba(20,33,61,.9);color:var(--ox-paper);box-shadow:inset 0 0 0 1px rgba(201,162,74,.5)}
+html.skin-ox .netspin{border-color:rgba(201,162,74,.35);border-top-color:var(--ox-gold)}
 .fvrw{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)}.fvrw:first-child{border-top:0}
 .fvrw .fvr{border-top:0;flex:1;min-width:0;width:auto}
 /* Learned 按钮：细线描边的胶囊，平时低调，悬停/按下变实心，不抢列表的视线 */
@@ -961,6 +968,7 @@ html.skin-ox .pkmask .pk{border-radius:6px}
       </template>
     </div></div>
 <transition name="tst"><div class="ftoast" v-if="favToast" role="status">{{ favToast }}</div></transition>
+<transition name="nt"><div class="netbox" v-if="netShow" role="status" aria-live="polite"><i class="netspin"></i>正在请求数据…</div></transition>
 <div class="tip" :style="{right: 'auto', left: tipPos.x + 'px', top: tipPos.y + 'px', transform: tipPos.up ? 'translateY(-100%)' : 'none'}" v-if="tip" @mouseenter="keepTip" @mouseleave="hideTip"><div class="th"><b>{{ tip.w }}</b><span class="ti" v-if="tipIpa(tip)">/{{ tipIpa(tip) }}/</span><span class="ps" v-if="tip.base !== tip.w.toLowerCase()">({{ tip.base }})</span><button class="dbtn" @click.stop="openDetail(tip.base)">详情 ›</button><button class="fvmark" type="button" v-if="favOn" :class="{on: isFav(kindOf(wk(tip.base)), wk(tip.base))}" @click.stop="toggleFav(kindOf(wk(tip.base)), wk(tip.base))" :aria-label="isFav(kindOf(wk(tip.base)), wk(tip.base)) ? '取消收藏' : '收藏'" :title="isFav(kindOf(wk(tip.base)), wk(tip.base)) ? '取消收藏' : '收藏'"><svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M6.5 3.5h11a1 1 0 0 1 1 1V21l-6.5-4.4L5.5 21V4.5a1 1 0 0 1 1-1z"/></svg></button></div><div class="alt first"><i class="ps">{{ tip.pos }}</i>{{ tip.zh }}</div><div class="alt" v-for="m in (tip.more || [])" :key="m[0]"><i class="ps">{{ m[0] }}</i>{{ m[1] }}</div><div class="alt ol" v-if="tip.ol">在线查看：<a :href="'https://dictionary.cambridge.org/dictionary/english-chinese-simplified/' + encodeURIComponent(tip.base)" target="_blank" rel="noopener">剑桥</a> · <a :href="'https://www.oxfordlearnersdictionaries.com/definition/english/' + encodeURIComponent(tip.base)" target="_blank" rel="noopener">牛津</a></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
@@ -1398,6 +1406,22 @@ createApp({
     // 后端地址：本机预览时连你电脑上的 Spring Boot（8080 端口）；线上后端还没部署，先留空
     const API_BASE = ["localhost", "127.0.0.1"].includes(location.hostname) ? "http://localhost:8080" : "https://ielts-backend-node.vercel.app";
     // 页面一打开就悄悄叫醒后端和数据库（免费版会休眠），不等结果、失败也不管
+    // ===== 「正在请求数据…」悬浮框的数据来源 =====
+    // 原理：把浏览器自带的 fetch 换成一个"包装版"。凡是发往我们后端（API_BASE）的请求，发出时计数 +1，
+    // 不管成功、失败还是超时，结束时一定 -1（finally）。所以 net.n > 0 就等于"现在有后端请求还没回来"。
+    // net 是 Vue.reactive 对象：数字一变，用到它的界面会自动更新。
+    // /health 是页面打开时悄悄叫醒后端的预热请求，不让用户等，所以不计数。
+    const net = Vue.reactive({ n: 0 });
+    const rawFetch = window.fetch.bind(window);
+    window.fetch = function (u, o) {
+      const mine = typeof u === "string" && API_BASE && u.indexOf(API_BASE) === 0 && u.indexOf("/health") < 0;
+      if (!mine) return rawFetch(u, o);
+      net.n++;
+      return rawFetch(u, o).finally(() => { net.n--; });
+    };
+    const netShow = Vue.ref(false); let netT = 0;
+    // 只有请求持续超过 0.3 秒才显示悬浮框（很快回来的请求不闪一下）；回到 0 立刻消失
+    Vue.watch(() => net.n, (n) => { clearTimeout(netT); if (n > 0) { netT = setTimeout(() => { netShow.value = true; }, 300); } else netShow.value = false; });
     if (API_BASE) { try { fetch(API_BASE + "/health", { cache: "no-store" }).catch(() => {}); } catch (e) {} }
     // 开关：true = 显示登录入口。想临时隐藏，把它改成 false 即可
     const loginOn = true;
@@ -1491,6 +1515,20 @@ createApp({
       if (!t || !API_BASE) return;
       const cached = loadUser();
       if (cached) authUser.value = cached;   // ① 先用缓存把界面显示成已登录
+      // 【这次修的 bug】以前这里不管收藏页，favState 一直是 "idle"（未加载）：
+      // 后端休眠时 /me 要重试好几次（最长约 9 秒），这期间点进收藏本，页面当成"没有收藏"显示空白；
+      // 如果 4 次都失败，收藏更是永远不会加载，刷新也一样空。现在：
+      // ① 一开始就标成 "loading"（收藏页会显示"加载中"，而不是空白）；
+      // ② 4 次都没连上，标成 "err"，收藏页显示错误和「重试」按钮；
+      // ③ 整个过程（包括重试之间的等待）都让 net.n 加 1，悬浮框全程显示，不会在等待间隙消失。
+      // restoreLogin() 在 setup 里比 favOn / favState 的定义更早被调用（那两个变量还没"出生"，现在碰它们会报错）。
+      // 所以先 await 一下：把后面的代码推迟到 setup 全部跑完之后（下一个微任务）再执行，这时它们都已经定义好了。
+      await Promise.resolve();
+      if (favOn) favState.value = "loading";
+      net.n++;
+      try { await restoreLoginTry(t); } finally { net.n--; }
+    };
+    const restoreLoginTry = async (t) => {
       for (let i = 0; i < 4; i++) {           // ② 最多试 4 次（间隔 0 / 1.5 / 3 / 4.5 秒）
         if (i) await new Promise((ok) => setTimeout(ok, 1500 * i));
         try {
@@ -1512,6 +1550,8 @@ createApp({
           console.warn("[restoreLogin] /me 返回 " + r.status + "，稍后重试");   // 5xx 等：服务器还没准备好，重试
         } catch (e) { console.warn("[restoreLogin] 连不上后端，稍后重试", e); }   // 网络错误 / CORS 失败：同样重试，不删 token
       }
+      // 4 次都没成功：保持已登录显示，但收藏页给出错误提示和重试按钮（点重试会直接再拉一次收藏）
+      favErr.value = "后端还没醒来，收藏没有加载，点「重试」"; favState.value = "err";
     };
     restoreLogin();
     const mk = (s) => { const u = new SpeechSynthesisUtterance(s); const k = playing.value; u.onerror = u.onend = () => { if (playing.value === k) playing.value = ""; }; return u; };
@@ -2187,7 +2227,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 289, t: "10-31 20:00" };
+    const VER = { n: 290, t: "11-01 10:30" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -2290,7 +2330,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { skin, toggleSkin, FPS, favPage, favPages, favPageC, pagedFav, expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favOn, favState, FKN, wk, kindOf, phrRow, phrKey, openPhr, favErr, favToast, loadFavs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { netShow, skin, toggleSkin, FPS, favPage, favPages, favPageC, pagedFav, expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favOn, favState, FKN, wk, kindOf, phrRow, phrKey, openPhr, favErr, favToast, loadFavs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
