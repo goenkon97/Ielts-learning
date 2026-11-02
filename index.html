@@ -652,7 +652,7 @@ html.skin-ox .pkmask .pk{border-radius:6px}
 <div id="app" v-cloak>
 <header>
   <button id="back" :style="{visibility: view==='home' ? 'hidden' : 'visible'}" @click="goBack">‹ 返回</button>
-  <b>{{ title }}<small class="ver" v-if="view==='home'">v{{ VER.n }} · {{ VER.t }}</small></b>
+  <b>{{ title }}<small class="ver" v-if="view==='home'">v{{ VER.n }} · {{ VER.t }}<template v-if="userCount!==null"> · {{ userCount }} {{ userCount===1 ? 'user' : 'users' }}</template></small></b>
   <div class="hr"><button id="favbtn" type="button" v-if="favOn && view !== 'fav'" @click="go('fav')" aria-label="收藏本" title="收藏本"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z"/><path d="M12 6.5v13"/></svg></button><button id="homebtn" type="button" v-if="view !== 'home'" @click="goHome" aria-label="回到首页" title="回到首页"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button></div>
 </header>
 <main>
@@ -1414,7 +1414,7 @@ createApp({
     const net = Vue.reactive({ n: 0 });
     const rawFetch = window.fetch.bind(window);
     window.fetch = function (u, o) {
-      const mine = typeof u === "string" && API_BASE && u.indexOf(API_BASE) === 0 && u.indexOf("/health") < 0;
+      const mine = typeof u === "string" && API_BASE && u.indexOf(API_BASE) === 0 && u.indexOf("/health") < 0 && u.indexOf("/stats/") < 0;
       if (!mine) return rawFetch(u, o);
       net.n++;
       return rawFetch(u, o).finally(() => { net.n--; });
@@ -1423,6 +1423,12 @@ createApp({
     // 只有请求持续超过 0.3 秒才显示悬浮框（很快回来的请求不闪一下）；回到 0 立刻消失
     Vue.watch(() => net.n, (n) => { clearTimeout(netT); if (n > 0) { netT = setTimeout(() => { netShow.value = true; }, 300); } else netShow.value = false; });
     if (API_BASE) { try { fetch(API_BASE + "/health", { cache: "no-store" }).catch(() => {}); } catch (e) {} }
+    // ===== 首页显示用户人数 =====
+    // 后端新增了公开接口 GET /stats/users，返回 { users: 数字 }（数据库里 app_user 表的行数，不含任何个人信息）。
+    // userCount 是响应式变量：一开始是 null（不显示），请求成功拿到数字后，页面上"N users"自动出现。
+    // 请求失败（后端休眠/断网）就静默忽略、不显示——人数只是装饰，不能影响别的功能；上面的 net 计数也跳过了 /stats/，不会弹"请求数据中"。
+    const userCount = Vue.ref(null);
+    if (API_BASE) { try { fetch(API_BASE + "/stats/users", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => { if (d && typeof d.users === "number") userCount.value = d.users; }).catch(() => {}); } catch (e) {} }
     // 开关：true = 显示登录入口。想临时隐藏，把它改成 false 即可
     const loginOn = true;
     const loginOpen = ref(false);   // 登录弹窗开没开
@@ -2227,7 +2233,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 290, t: "11-01 10:30" };
+    const VER = { n: 291, t: "11-02 19:30" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
@@ -2330,7 +2336,7 @@ createApp({
     let backLock = 0;
     const goBack = () => { const nowT = Date.now(); if (nowT - backLock < 180) return; backLock = nowT; const before = routeHash.value; const up = () => { replaceNext = true; back(); Vue.nextTick(() => { replaceNext = false; }); }; if (histN() > 0) { try { history.back(); setTimeout(() => { if (routeHash.value === before) up(); }, 320); return; } catch (e) {} } up(); };
     const goHome = () => { tip.value = null; const n = histN(); dstack.value = []; origin = null; gpart.value = ""; q.value = ""; lastHash = ""; view.value = "home"; window.scrollTo({ top: 0 }); if (n > 0) { pendingHome = true; try { history.go(-n); } catch (e) { pendingHome = false; } clearTimeout(homeT); homeT = setTimeout(() => { if (pendingHome) { pendingHome = false; try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } }, 500); } else { try { history.replaceState({ n: 0, ep: EP }, "", "#/"); } catch (e) {} } };
-    return { netShow, skin, toggleSkin, FPS, favPage, favPages, favPageC, pagedFav, expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favOn, favState, FKN, wk, kindOf, phrRow, phrKey, openPhr, favErr, favToast, loadFavs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
+    return { userCount, netShow, skin, toggleSkin, FPS, favPage, favPages, favPageC, pagedFav, expBusy, expMsg, expStop, exportVideo, exportCat, artVideo, vidOpen, loginOn, loginOpen, authUser, loginMsg, verifyMsg, openLogin, doLogout, artLoaded, artPh, artProg, VER, onlSyn, exAll, onlMsg, co, goBack, goHome, pack, pkOpen, pkStart, pkPause, pkClear, exCh, pgs, pgOf, listAll, plistAll, llistAll, stHtml, artClick, artDbl, artDown, artMove, lpCancel, trHtml, artBlocks, sq, sugs, pickS, artPairs, TP, tcur, tprev, tnext, openT, bh, PH, GR, PCATS, pcatN, pcat, plist, FQ, RL, gpart, gfq, gcur, gall, glist, gprev, gnext, openG, tlSvg, artPhrases, ACATS, topicCat, showTr, openCat, catArts, prevArt, nextArt, bandOf, wordCount, artKeys, LK, LCATS, lcatN, lcat, llist, hideTip, keepTip, dstack, jumpTo, favs, favOn, favState, FKN, wk, kindOf, phrRow, phrKey, openPhr, favErr, favToast, loadFavs, favTab, favHide, favPeek, toggleHide, favList, favN, isFav, toggleFav, pcur, favMeaning, openFav, detailW, dt, openDetail, speakAcc, sHtml, catN, tipPos, clickSay, cat, CATS, speakWord, tipIpa, tip, showTip, wrap, playing, NU, cur, pickSyn, pickHead, EX, exHtml, sayText, ipa, say, lang, view, artIdx, quiz, q, shown, T, list, title, articleHtml, go, openArt, back, toggleQuiz, SYN, ART };
   }
 }).mount("#app");
 (function(){ const h = document.querySelector("header"); if (!h) return; const f = () => document.documentElement.style.setProperty("--hh", h.offsetHeight + "px"); f(); addEventListener("resize", f); if (window.ResizeObserver) new ResizeObserver(f).observe(h); })();
