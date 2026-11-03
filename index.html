@@ -570,7 +570,11 @@ html.skin-ox .stick{background:var(--ox-paper);background-image:none}
 html.skin-ox main{padding-top:14px}
 /* 首页：名字、座右铭、搜索框也放进海军蓝的头部里（用超宽阴影把蓝色铺满整个屏幕宽度） */
 html.skin-ox main:has(.hhead){padding-top:0}
-html.skin-ox .hhead{background:var(--ox-navy);color:var(--ox-paper);margin:0 0 22px;padding:14px 0 22px;box-shadow:0 0 0 100vmax var(--ox-navy),0 3px 0 100vmax var(--ox-gold);clip-path:inset(0 -100vmax -3px)}
+/* 首页深蓝头部。以前用"超大 box-shadow + clip-path"把蓝底铺满屏宽，但 clip-path 会把超出头部下沿的东西一起裁掉——搜索提示下拉框(.hsl)就被裁没了（新皮肤搜索没有提示的 bug）。
+   现在改用伪元素 ::before 画整屏宽的蓝底 + 底部 3px 金线（z-index:-1 垫在内容后面，isolation 让它不跑到头部外面），不再裁剪，下拉框就能正常显示在头部下面。
+   伪元素宽度正好 100vw 并以头部中心为基准居中（left:50% + margin-left:-50vw），所以不会超出屏幕、不产生横向滚动条。 */
+html.skin-ox .hhead{color:var(--ox-paper);margin:0 0 22px;padding:14px 0 22px;isolation:isolate;z-index:5}
+html.skin-ox .hhead::before{content:"";position:absolute;z-index:-1;top:0;bottom:-3px;left:50%;width:100vw;margin-left:-50vw;background:linear-gradient(to bottom,var(--ox-navy) calc(100% - 3px),var(--ox-gold) calc(100% - 3px))}
 html.skin-ox .hhead .nm{color:var(--ox-paper);font-family:var(--ox-serif);font-weight:700;letter-spacing:.005em}
 html.skin-ox .hhead .mot{color:#d9cfb6;font-family:var(--ox-serif);font-style:italic;font-size:19px}
 html.skin-ox .ltag{background:var(--ox-gold)!important;background-image:none!important;color:var(--ox-navy)!important;box-shadow:none!important}
@@ -2233,7 +2237,7 @@ createApp({
     const pkClear = async () => { if (!confirm("删除已下载的语音包？")) return; pkStop = true; try { await window.__idbDrop(); } catch (e) {} try { for (const k of await pkLegacy()) await caches.delete(k); } catch (e) {} LOC.clear(); try { localStorage.removeItem("ielts_pk_legacy_done"); } catch (e) {} recSave(true); pack.done = 0; pack.msg = "已删除"; pkUsage(); };
     try { const r0 = recLoad(); if (r0) r0.forEach(i => LOC.add(i)); } catch (e) {} /* 一打开就从本机记录里建好清单，不等联网 */
     setTimeout(pkInit, 300);
-    const VER = { n: 291, t: "11-02 19:30" };
+    const VER = { n: 292, t: "11-03 15:10" };
     const onl = Vue.reactive({}); const ONLK = "ielts_onl_v1"; let onlC = {}; try { onlC = JSON.parse(localStorage.getItem(ONLK) || "{}"); } catch (e) { onlC = {}; }
     const onlSave = () => { try { const ks = Object.keys(onlC); if (ks.length > 400) ks.slice(0, 100).forEach(k => delete onlC[k]); localStorage.setItem(ONLK, JSON.stringify(onlC)); } catch (e) {} };
     const onlZh = Vue.reactive({}); const ZHK = "ielts_onlzh_v1"; let zhC = {}; try { zhC = JSON.parse(localStorage.getItem(ZHK) || "{}"); } catch (e) { zhC = {}; }
